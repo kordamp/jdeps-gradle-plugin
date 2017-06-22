@@ -35,7 +35,7 @@ class JDepsTask extends DefaultTask {
     @Input boolean recursive = false
     @Input boolean jdkinternals = true
     @Input boolean consoleOutput = true
-    @InputDirectory @Optional File reportsDirectory
+    @InputDirectory @Optional File reportsDir
 
     List<String> failures = []
 
@@ -68,24 +68,23 @@ class JDepsTask extends DefaultTask {
             String output = JDepsTask.runJDepsOn(baseCmd, file.absolutePath)
 
             if (output) {
-                failures << "$output"
+                failures << output
             }
         }
 
-		if (failures) {
-			if (consoleOutput) println failures.join('\n')
+        if (failures) {
+            if (consoleOutput) println failures.join('\n')
 
-			File parentFile = reportsDirectory ?: project.file("${project.buildDir}/reports/jdeps")
-			parentFile.mkdirs()
-			File logFile = new File(parentFile, "jdeps-report.txt")
+            File parentFile = reportsDir ?: project.file("${project.buildDir}/reports/jdeps")
+            if (!parentFile.exists()) parentFile.mkdirs()
+            File logFile = new File(parentFile, 'jdeps-report.txt')
 
-			failures.each { f -> logFile.write(f) }
-			return
-		}
+            logFile.withPrintWriter { w -> failures.each { f -> w.println(f) } }
 
-		if (failOnError) {
-			throw new BuildException("jdeps reported errors in ${project.name}".toString(), null)
-		}
+            if (failOnError) {
+                throw new BuildException("jdeps reported errors in ${project.name}".toString(), null)
+            }
+        }
     }
 
     private static String runJDepsOn(List<String> baseCmd, String path) {
