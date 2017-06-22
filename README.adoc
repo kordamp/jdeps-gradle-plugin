@@ -1,12 +1,13 @@
 = jdeps-gradle-plugin
 :linkattrs:
 :project-name: jdeps-gradle-plugin
-:plugin-version: 0.1.0
+:plugin-version: 0.2.0
 
 image:http://img.shields.io/travis/aalmiray/{project-name}/master.svg["Build Status", link="https://travis-ci.org/aalmiray/{project-name}"]
 image:http://img.shields.io/coveralls/aalmiray/{project-name}/master.svg["Coverage Status", link="https://coveralls.io/r/aalmiray/{project-name}"]
 image:http://img.shields.io/badge/license-ASF2-blue.svg["Apache License 2", link="http://www.apache.org/licenses/LICENSE-2.0.txt"]
 image:https://api.bintray.com/packages/aalmiray/kordamp/{project-name}/images/download.svg[link="https://bintray.com/aalmiray/kordamp/{project-name}/_latestVersion"]
+image:https://img.shields.io/badge/donations-Patreon-orange.svg[https://www.patreon.com/user?u=6609318]
 
 ---
 
