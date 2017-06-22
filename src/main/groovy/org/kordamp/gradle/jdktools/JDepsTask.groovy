@@ -17,12 +17,15 @@ package org.kordamp.gradle.jdktools
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.tooling.BuildException
 import org.zeroturnaround.exec.ProcessExecutor
 
 /**
  * @author Andres Almiray
+ * @author Mark Paluch
  */
 class JDepsTask extends DefaultTask {
     @Input boolean failOnError = true
@@ -31,6 +34,8 @@ class JDepsTask extends DefaultTask {
     @Input boolean profile = false
     @Input boolean recursive = false
     @Input boolean jdkinternals = true
+    @Input boolean consoleOutput = true
+    @InputDirectory @Optional File reportsDirectory
 
     List<String> failures = []
 
@@ -67,8 +72,20 @@ class JDepsTask extends DefaultTask {
             }
         }
 
-        if (failures) println failures.join('\n')
-        if (failOnError && failures) throw new BuildException("jdeps reported errors in ${project.name}".toString(), null)
+		if (failures) {
+			if (consoleOutput) println failures.join('\n')
+
+			File parentFile = reportsDirectory ?: project.file("${project.buildDir}/reports/jdeps")
+			parentFile.mkdirs()
+			File logFile = new File(parentFile, "jdeps-report.txt")
+
+			failures.each { f -> logFile.write(f) }
+			return
+		}
+
+		if (failOnError) {
+			throw new BuildException("jdeps reported errors in ${project.name}".toString(), null)
+		}
     }
 
     private static String runJDepsOn(List<String> baseCmd, String path) {
