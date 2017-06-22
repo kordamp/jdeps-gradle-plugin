@@ -18,6 +18,20 @@ Runs the `jdeps` command on the project's output and all of its dependencies.
 [source,groovy]
 [subs="attributes"]
 ----
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'org.kordamp.gradle:{project-name}:{plugin-version}
+    }
+}
+apply plugin: 'org.kordamp.jdeps'
+----
+
+[source,groovy]
+[subs="attributes"]
+----
 plugins {
     id 'org.kordamp.jdeps' version '{plugin-version}'
 }
@@ -32,13 +46,15 @@ This will add a `jdeps` task to your build, which will analyze the `main` source
 The following properties can be specified in the `jdeps` task configuration
 
 |===
-| Name         | Type    | Default Value
-| verbose      | boolean | false
-| summary      | boolean | false
-| profile      | boolean | false
-| recursive    | boolean | false
-| jdkinternals | boolean | true
-| failOnError  | boolean | true
+| Name           | Type    | Default Value
+| verbose        | boolean | false
+| summary        | boolean | false
+| profile        | boolean | false
+| recursive      | boolean | false
+| jdkinternals   | boolean | true
+| failOnError    | boolean | true
+| consoleOutput  | boolean | true
+| reportsDir     | File    | "${buildDir}/reports/jdeps"
 |===
 
-If `failOnError` is set to true the build will result on failure if `jdeps` reports any problems.
+If `failOnError` is set to true the build will result in failure if `jdeps` reports any problems.
