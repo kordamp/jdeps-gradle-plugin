@@ -23,7 +23,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'org.kordamp.gradle:{project-name}:{plugin-version}
+        classpath 'org.kordamp.gradle:{project-name}:{plugin-version}'
     }
 }
 apply plugin: 'org.kordamp.jdeps'
