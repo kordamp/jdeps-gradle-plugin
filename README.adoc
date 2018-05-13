@@ -15,6 +15,8 @@ Runs the `jdeps` command on the project's output and all of its dependencies.
 
 == Usage
 
+In your **project** `build.gradle` file, add...
+
 [source,groovy]
 [subs="attributes"]
 ----
@@ -26,19 +28,17 @@ buildscript {
         classpath 'org.kordamp.gradle:{project-name}:{plugin-version}'
     }
 }
-apply plugin: 'org.kordamp.jdeps'
-----
 
-[source,groovy]
-[subs="attributes"]
-----
 plugins {
     id 'org.kordamp.jdeps' version '{plugin-version}'
 }
-----
 
-This will add a `jdeps` task to your build, which will analyze the `main` sourceSets and all dependencies found in the
-`runtime` configuration.
+apply plugin: 'org.kordamp.jdeps'
+.
+.
+.
+----
+This will add a `jdeps` task to your build, which will analyze the `main` sourceSets and all dependencies found in the `runtime` configuration.
 
 == Configuration
 === Plugin configuration
