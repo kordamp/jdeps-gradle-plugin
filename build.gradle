@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,12 @@ plugins {
     id 'groovy'
     id 'idea'
     id 'maven-publish'
-    id 'jacoco'
     id 'java-gradle-plugin'
     id 'com.jfrog.bintray'              version '1.7.3'
     id 'net.nemerosa.versioning'        version '2.6.0'
     id 'com.github.ben-manes.versions'  version '0.15.0'
     id 'com.gradle.plugin-publish'      version '0.9.7'
     id 'com.github.hierynomus.license'  version '0.11.0'
-    id 'com.github.kt3k.coveralls'      version '2.8.1'
 }
 
 apply from: 'gradle/credentials.gradle'
@@ -34,7 +32,7 @@ apply from: 'gradle/code-quality.gradle'
 
 gradlePlugin {
     plugins {
-        jbakePlugin {
+        jdepsPlugin {
             id = project_pluginId
             implementationClass = 'org.kordamp.gradle.jdktools.JDepsPlugin'
         }
@@ -62,9 +60,6 @@ dependencies {
     compile gradleApi()
     compile files(org.gradle.internal.jvm.Jvm.current().toolsJar)
     compile "org.zeroturnaround:zt-exec:$ztexecVersion"
-    testCompile("org.spockframework:spock-core:$spockVersion") {
-        exclude group:'org.codehaus.groovy'
-    }
 }
 
 compileGroovy {
@@ -125,16 +120,5 @@ project.tasks.withType(Test) {
                 println "Test results ${project.name}: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
             }
         }
-    }
-}
-
-jacoco {
-    toolVersion = jacocoVersion
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled = true // coveralls plugin depends on xml format report
-        html.enabled = true
     }
 }
