@@ -36,6 +36,8 @@ class JDepsTask extends DefaultTask {
     @Input boolean jdkinternals = true
     @Input boolean consoleOutput = true
     @InputDirectory @Optional File reportsDir
+    @Input @Optional List<String> configurations = ['runtime']
+    @Input @Optional List<String> sourceSets = ['main']
 
     List<String> failures = []
 
@@ -48,27 +50,34 @@ class JDepsTask extends DefaultTask {
         if (recursive) baseCmd << '-recursive'
         if (jdkinternals) baseCmd << '-jdkinternals'
 
-        project.sourceSets.main.output.files.each { File file ->
-            if (!file.exists()) {
-                return // skip
-            }
+        if (!configurations) configurations = ['runtime']
+        if (!sourceSets) sourceSets = ['main']
 
-            String output = JDepsTask.runJDepsOn(baseCmd, file.absolutePath)
+        sourceSets.each { sc ->
+            project.sourceSets[sc].output.files.each { File file ->
+                if (!file.exists()) {
+                    return // skip
+                }
 
-            if (output) {
-                failures << "${project.name}\n$output"
+                String output = JDepsTask.runJDepsOn(baseCmd, file.absolutePath)
+
+                if (output) {
+                    failures << "${project.name}\n$output"
+                }
             }
         }
 
-        project.configurations.runtime.resolve().each { File file ->
-            if (!file.exists()) {
-                return // skip
-            }
+        configurations.each { c ->
+            project.configurations[c].resolve().each { File file ->
+                if (!file.exists()) {
+                    return // skip
+                }
 
-            String output = JDepsTask.runJDepsOn(baseCmd, file.absolutePath)
+                String output = JDepsTask.runJDepsOn(baseCmd, file.absolutePath)
 
-            if (output) {
-                failures << output
+                if (output) {
+                    failures << output
+                }
             }
         }
 

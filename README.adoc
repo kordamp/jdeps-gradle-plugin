@@ -1,7 +1,7 @@
 = jdeps-gradle-plugin
 :linkattrs:
 :project-name: jdeps-gradle-plugin
-:plugin-version: 0.2.0
+:plugin-version: 0.3.0
 
 image:http://img.shields.io/travis/aalmiray/{project-name}/master.svg["Build Status", link="https://travis-ci.org/aalmiray/{project-name}"]
 image:http://img.shields.io/coveralls/aalmiray/{project-name}/master.svg["Coverage Status", link="https://coveralls.io/r/aalmiray/{project-name}"]
@@ -46,15 +46,28 @@ This will add a `jdeps` task to your build, which will analyze the `main` source
 The following properties can be specified in the `jdeps` task configuration
 
 |===
-| Name           | Type    | Default Value
-| verbose        | boolean | false
-| summary        | boolean | false
-| profile        | boolean | false
-| recursive      | boolean | false
-| jdkinternals   | boolean | true
-| failOnError    | boolean | true
-| consoleOutput  | boolean | true
-| reportsDir     | File    | "${buildDir}/reports/jdeps"
+| Name           | Type         | Default Value
+| verbose        | boolean      | false
+| summary        | boolean      | false
+| profile        | boolean      | false
+| recursive      | boolean      | false
+| jdkinternals   | boolean      | true
+| failOnError    | boolean      | true
+| consoleOutput  | boolean      | true
+| reportsDir     | File         | "${buildDir}/reports/jdeps"
+| configurations | List<String> | ['runtime']
+| sourceSets     | List<String> | ['main']
 |===
 
 If `failOnError` is set to true the build will result in failure if `jdeps` reports any problems.
+
+You may configure multiple sourceSets and configurations, which will be evaluated in a single report. The following snippet
+shows how this plugin can be configured to run `jdeps` on production and test sources
+
+[source]
+----
+jdeps {
+    sourceSets = ['main', 'test']
+    configurations = ['testRuntime']
+}
+----
