@@ -14,6 +14,7 @@ Runs the `jdeps` command on the project's output and all of its dependencies.
 
 == Usage
 
+Option #1
 [source,groovy]
 [subs="attributes"]
 ----
@@ -28,6 +29,7 @@ buildscript {
 apply plugin: 'org.kordamp.jdeps'
 ----
 
+Option #2
 [source,groovy]
 [subs="attributes"]
 ----
