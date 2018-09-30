@@ -18,18 +18,23 @@ import java.text.SimpleDateFormat
 
 Date buildTimeAndDate = new Date()
 ext {
+    buildBy = System.properties['user.name']
     buildDate = new SimpleDateFormat('yyyy-MM-dd').format(buildTimeAndDate)
     buildTime = new SimpleDateFormat('HH:mm:ss.SSSZ').format(buildTimeAndDate)
+    buildRevision = versioning.info.commit
+    buildJdk = "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})".toString()
+    buildCreatedBy = "Gradle ${gradle.gradleVersion}"
 }
 
 jar {
     manifest {
         attributes(
-            'Built-By': System.properties['user.name'],
-            'Created-By': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})".toString(),
-            'Build-Date': buildDate,
-            'Build-Time': buildTime,
-            'Build-Revision': versioning.info.commit,
+            'Created-By': buildCreatedBy,
+            'x-Built-By': buildBy,
+            'x-Build-Jdk': buildJdk,
+            'x-Build-Date': buildDate,
+            'x-Build-Time': buildTime,
+            'x-Build-Revision': buildRevision,
             'Specification-Title': project.name,
             'Specification-Version': project.version,
             'Specification-Vendor': project.name,
@@ -45,36 +50,6 @@ jar {
     }
 }
 
-def pomConfig = {
-    name project.name
-    description project.project_description
-    url project.project_website
-    inceptionYear '2017'
-    licenses {
-        license([:]) {
-            name 'The Apache Software License, Version 2.0'
-            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-            distribution 'repo'
-        }
-    }
-    scm {
-        url project.project_vcs
-    }
-    developers {
-        [
-            aalmiray: 'Andres Almiray'
-        ].each { devId, devName ->
-            developer {
-                id devId
-                name devName
-                roles {
-                    role 'Developer'
-                }
-            }
-        }
-    }
-}
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -82,9 +57,31 @@ publishing {
             artifact sourcesJar
             artifact javadocJar
 
-            pom.withXml {
-                asNode().children().last() + pomConfig
-                asNode().appendNode('description', project.project_description)
+            pom {
+                name = project.name
+                description = project.project_description
+                url = project.project_website
+                inceptionYear = '2017'
+                licenses {
+                    license {
+                        name = 'The Apache Software License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution = 'repo'
+                    }
+                }
+                scm {
+                    url = project.project_vcs
+                }
+                developers {
+                    [
+                        aalmiray: 'Andres Almiray',
+                    ].each { devId, devName ->
+                        developer {
+                            id = devId
+                            name = devName
+                        }
+                    }
+                }
             }
         }
     }
@@ -106,6 +103,7 @@ bintray {
         issueTrackerUrl = project.project_issues
         vcsUrl = project.project_vcs
         publicDownloadNumbers = true
+        githubRepo = 'aalmiray/jdeps-gradle-plugin'
         version {
             attributes = ['gradle-plugin': 'org.jkordamp.jdeps:org.kordamp.gradle:jdeps-gradle-plugin']
         }

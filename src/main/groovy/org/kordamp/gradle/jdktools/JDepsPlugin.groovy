@@ -15,12 +15,14 @@
  */
 package org.kordamp.gradle.jdktools
 
+import groovy.transform.CompileStatic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 /**
  * @author Andres Almiray
  */
+@CompileStatic
 class JDepsPlugin implements Plugin<Project> {
     Project project
 

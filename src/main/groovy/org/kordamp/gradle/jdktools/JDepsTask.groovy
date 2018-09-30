@@ -19,6 +19,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.tooling.BuildException
 import org.zeroturnaround.exec.ProcessExecutor
@@ -35,11 +36,11 @@ class JDepsTask extends DefaultTask {
     @Input boolean recursive = false
     @Input boolean jdkinternals = true
     @Input boolean consoleOutput = true
-    @InputDirectory @Optional File reportsDir
     @Input @Optional List<String> configurations = ['runtime']
     @Input @Optional List<String> sourceSets = ['main']
 
-    List<String> failures = []
+    private List<String> failures = []
+    private Object reportDir
 
     @TaskAction
     void evaluate() {
@@ -84,7 +85,7 @@ class JDepsTask extends DefaultTask {
         if (failures) {
             if (consoleOutput) println failures.join('\n')
 
-            File parentFile = reportsDir ?: project.file("${project.buildDir}/reports/jdeps")
+            File parentFile = getReportsDir()
             if (!parentFile.exists()) parentFile.mkdirs()
             File logFile = new File(parentFile, 'jdeps-report.txt')
 
@@ -94,6 +95,19 @@ class JDepsTask extends DefaultTask {
                 throw new BuildException("jdeps reported errors in ${project.name}".toString(), null)
             }
         }
+    }
+
+    @OutputDirectory
+    File getReportsDir() {
+        if( this.reportDir == null) {
+            File reportsDir = new File(project.buildDir, 'reports')
+            this.reportDir = new File(reportsDir, 'jdeps')
+        }
+        project.file(this.reportDir)
+    }
+
+    void setReportsDir(File f) {
+        this.reportDir = f
     }
 
     private static String runJDepsOn(List<String> baseCmd, String path) {
