@@ -39,7 +39,7 @@ class JDepsTask extends DefaultTask {
     @Input @Optional List<String> configurations = ['runtime']
     @Input @Optional List<String> sourceSets = ['main']
 
-    private List<String> failures = []
+    List<String> failures = []
     private Object reportDir
 
     @TaskAction
