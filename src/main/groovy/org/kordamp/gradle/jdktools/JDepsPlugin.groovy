@@ -1,5 +1,7 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright 2017-2018 Andres Almiray.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +20,8 @@ package org.kordamp.gradle.jdktools
 import groovy.transform.CompileStatic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.plugins.BasePlugin
+import org.gradle.api.plugins.JavaBasePlugin
 
 /**
  * @author Andres Almiray
@@ -28,12 +32,13 @@ class JDepsPlugin implements Plugin<Project> {
 
     void apply(Project project) {
         this.project = project
-        project.apply(plugin: 'java')
 
-        project.tasks.findByName('check').dependsOn << project.task('jdeps',
-            type: JDepsTask,
-            group: 'Build',
+        project.plugins.apply(JavaBasePlugin)
+
+        project.tasks.findByName('check').dependsOn << project.task('jdepsReport',
+            type: JDepsReportTask,
+            group: BasePlugin.BUILD_GROUP,
             dependsOn: 'classes',
-            description: 'Evaluate project dependencies with jdeps')
+            description: 'Generate a jdeps report on project classes and dependencies')
     }
 }

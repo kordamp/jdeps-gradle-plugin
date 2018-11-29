@@ -1,11 +1,13 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright 2018 Andres Almiray.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,30 +19,24 @@
 plugins {
     id 'groovy'
     id 'idea'
-    id 'maven-publish'
     id 'java-gradle-plugin'
-    id 'com.jfrog.bintray'              version '1.8.4'
-    id 'net.nemerosa.versioning'        version '2.7.1'
-    id 'com.github.ben-manes.versions'  version '0.20.0'
-    id 'com.gradle.plugin-publish'      version '0.10.0'
-    id 'com.github.hierynomus.license'  version '0.14.0'
+    id 'org.kordamp.gradle.kordamp-parentpom' version '1.1.1'
+    id 'com.gradle.plugin-publish'            version '0.10.0'
 }
 
-apply from: 'gradle/credentials.gradle'
-apply from: 'gradle/publishing.gradle'
-apply from: 'gradle/code-quality.gradle'
+config {
+    info {
+        name          = rootProject.name
+        description   = pluginDescription
+        inceptionYear = '2017'
+        tags          = ['jdeps', 'jdktool', 'jigsaw', 'modules']
 
-gradlePlugin {
-    plugins {
-        jdepsPlugin {
-            id = project_pluginId
-            implementationClass = 'org.kordamp.gradle.jdktools.JDepsPlugin'
-        }
+        specification { enabled = false }
     }
-}
 
-repositories {
-    jcenter()
+    groovydoc {
+        replaceJavadoc = true
+    }
 }
 
 dependencyUpdates.resolutionStrategy = {
@@ -58,7 +54,6 @@ dependencyUpdates.resolutionStrategy = {
 
 dependencies {
     compile gradleApi()
-    compile files(org.gradle.internal.jvm.Jvm.current().toolsJar)
     compile "org.zeroturnaround:zt-exec:$ztexecVersion"
 }
 
@@ -67,59 +62,43 @@ compileGroovy {
     targetCompatibility = project.targetCompatibility
 }
 
-groovydoc {
-    use             = true
-    source          = project.sourceSets.main.allSource
-    classpath       = javadoc.classpath
-    ext.windowtitle = "$project.name $project.version API"
-    ext.doctitle    = "$project.name $project.version API"
-    header          = "$project.name $project.version API"
-    footer          = "Copyright &copy; ${copyrightYear} the original author or authors. All rights reserved."
-    includePrivate  = false
-    link 'https://docs.gradle.org/3.5/javadoc/', 'org.gradle.'
-    link 'http://docs.oracle.com/javase/7/docs/api/', 'java.', 'org.xml.', 'javax.', 'org.w3c.'
-}
-
-task sourcesJar(type: Jar) {
-    group 'Build'
-    description 'An archive of the source code'
-    classifier 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: groovydoc) {
-    group 'Build'
-    description 'An archive of the javadoc'
-    classifier 'javadoc'
-    dependsOn javadoc
-    from groovydoc.destinationDir
-}
-
-jar.finalizedBy sourcesJar
-jar.finalizedBy javadocJar
-
-artifacts {
-    sourcesJar
-    javadocJar
-}
-
 task publishRelease(dependsOn: [bintrayUpload, publishPlugins]) {}
 
-project.tasks.withType(Test) {
-    beforeTest { descriptor ->
-        logger.lifecycle("Running test: " + descriptor)
-    }
-
-    onOutput { descriptor, event ->
-        logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
-    }
-
-    testLogging {
-        showStandardStreams = true
-        afterSuite { desc, result ->
-            if (!desc.parent) {
-                println "Test results ${project.name}: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+afterEvaluate {
+    gradlePlugin {
+        plugins {
+            jdepsPlugin {
+                id                  = pluginId
+                implementationClass = pluginImplementationClass
             }
+        }
+    }
+
+    bintray {
+        pkg {
+            version {
+                attributes = ['gradle-plugin': "${project.pluginId}:${project.group}:${project.name}"]
+            }
+        }
+    }
+
+    pluginBundle {
+        website     = project.mergedConfiguration.info.links.website
+        vcsUrl      = project.mergedConfiguration.info.links.scm
+        description = project.mergedConfiguration.info.description
+        tags        = project.mergedConfiguration.info.tags
+
+        plugins {
+            jdepsPlugin {
+                id          = project.pluginId
+                displayName = project.mergedConfiguration.info.description
+            }
+        }
+
+        mavenCoordinates {
+            groupId    = project.group
+            artifactId = project.name
+            version    = project.version
         }
     }
 }
