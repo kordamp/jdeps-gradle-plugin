@@ -20,7 +20,7 @@ plugins {
     id 'groovy'
     id 'idea'
     id 'java-gradle-plugin'
-    id 'org.kordamp.gradle.kordamp-parentpom' version '1.1.1'
+    id 'org.kordamp.gradle.kordamp-parentpom' version '1.1.2'
     id 'com.gradle.plugin-publish'            version '0.10.0'
 }
 

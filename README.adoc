@@ -1,7 +1,7 @@
 = jdeps-gradle-plugin
 :linkattrs:
 :project-name: jdeps-gradle-plugin
-:plugin-version: 0.4.1
+:plugin-version: 0.5.0
 
 image:http://img.shields.io/travis/aalmiray/{project-name}/master.svg["Build Status", link="https://travis-ci.org/aalmiray/{project-name}"]
 image:http://img.shields.io/badge/license-ASF2-blue.svg["Apache License 2", link="http://www.apache.org/licenses/LICENSE-2.0.txt"]
@@ -26,7 +26,7 @@ buildscript {
         classpath 'org.kordamp.gradle:{project-name}:{plugin-version}'
     }
 }
-apply plugin: 'org.kordamp.jdeps'
+apply plugin: 'org.kordamp.gradle.jdeps'
 ----
 
 Option #2
@@ -34,11 +34,11 @@ Option #2
 [subs="attributes"]
 ----
 plugins {
-    id 'org.kordamp.jdeps' version '{plugin-version}'
+    id 'org.kordamp.gradle.jdeps' version '{plugin-version}'
 }
 ----
 
-This will add a `jdeps` task to your build, which will analyze the `main` sourceSets and all dependencies found in the
+This will add a `jdepsReport` task to your build, which will analyze the `main` sourceSets and all dependencies found in the
 `runtime` configuration.
 
 == Configuration
@@ -53,21 +53,18 @@ The following properties can be specified in the `jdeps` task configuration
 | profile        | boolean      | false
 | recursive      | boolean      | false
 | jdkinternals   | boolean      | true
-| failOnError    | boolean      | true
 | consoleOutput  | boolean      | true
 | reportsDir     | File         | "${buildDir}/reports/jdeps"
 | configurations | List<String> | ['runtime']
 | sourceSets     | List<String> | ['main']
 |===
 
-If `failOnError` is set to true the build will result in failure if `jdeps` reports any problems.
-
 You may configure multiple sourceSets and configurations, which will be evaluated in a single report. The following snippet
 shows how this plugin can be configured to run `jdeps` on production and test sources
 
 [source]
 ----
-jdeps {
+jdepsReport {
     sourceSets = ['main', 'test']
     configurations = ['testRuntime']
 }
