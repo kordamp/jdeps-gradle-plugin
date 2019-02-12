@@ -17,12 +17,12 @@
  */
 
 plugins {
+    id 'com.gradle.build-scan'                version '1.16'
     id 'groovy'
     id 'idea'
     id 'java-gradle-plugin'
     id 'org.kordamp.gradle.kordamp-parentpom' version '1.1.2'
     id 'com.gradle.plugin-publish'            version '0.10.0'
-    id 'com.gradle.build-scan'                version '1.16'
 }
 
 buildScan {
