@@ -22,6 +22,12 @@ plugins {
     id 'java-gradle-plugin'
     id 'org.kordamp.gradle.kordamp-parentpom' version '1.1.2'
     id 'com.gradle.plugin-publish'            version '0.10.0'
+    id 'com.gradle.build-scan'      version '2.1'
+}
+
+buildScan {
+    termsOfServiceUrl   = 'https://gradle.com/terms-of-service'
+    termsOfServiceAgree = 'yes'
 }
 
 config {
