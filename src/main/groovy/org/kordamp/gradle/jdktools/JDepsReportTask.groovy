@@ -40,8 +40,7 @@ class JDepsReportTask extends DefaultTask {
     @Input boolean consoleOutput = true
     @Input @Optional List<String> configurations = ['runtime']
     @Input @Optional List<String> sourceSets = ['main']
-
-    List<String> commandOutput = []
+    
     private Object reportDir
 
     JDepsReportTask() {
@@ -54,6 +53,10 @@ class JDepsReportTask extends DefaultTask {
         JavaCompile compileJava = project.tasks.findByName(JavaPlugin.COMPILE_JAVA_TASK_NAME)
         String classpath = compileJava.classpath.asPath
         List<String> compilerArgs = compileJava.options.compilerArgs
+        /** #prevent global leak with per module record output for multimodule. 
+            For much larger project, Could be furher improved with a buffer so it won't eat the heap further...
+        **/
+        List<String> commandOutput = [] 
 
         final List<String> baseCmd = ['jdeps']
         if (summary) baseCmd << '-s'
@@ -123,8 +126,7 @@ class JDepsReportTask extends DefaultTask {
             File parentFile = getReportsDir()
             if (!parentFile.exists()) parentFile.mkdirs()
             File logFile = new File(parentFile, 'jdeps-report.txt')
-
-            logFile.withPrintWriter { w -> this.outputs.each { f -> w.println(f) } }
+            logFile.append(commandOutput)            
         }
     }
 
