@@ -19,6 +19,7 @@ package org.kordamp.gradle.jdktools
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.JavaVersion
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
@@ -39,8 +40,11 @@ class JDepsReportTask extends DefaultTask {
     @Input boolean jdkinternals = true
     @Input boolean consoleOutput = true
     @Input @Optional List<String> configurations = ['runtime']
+    @Input @Optional List<String> classpaths = ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
     @Input @Optional List<String> sourceSets = ['main']
-    
+    @Input @Optional Integer multiRelease
+    @Input @Optional Map<String, Integer> multiReleaseJars = [:]
+
     private Object reportDir
 
     JDepsReportTask() {
@@ -54,9 +58,9 @@ class JDepsReportTask extends DefaultTask {
         String classpath = compileJava.classpath.asPath
         List<String> compilerArgs = compileJava.options.compilerArgs
         /** #prevent global leak with per module record output for multimodule. 
-            For much larger project, Could be furher improved with a buffer so it won't eat the heap further...
-        **/
-        List<String> commandOutput = [] 
+         For much larger project, Could be furher improved with a buffer so it won't eat the heap further...
+         **/
+        List<String> commandOutput = []
 
         final List<String> baseCmd = ['jdeps']
         if (summary) baseCmd << '-s'
@@ -66,6 +70,11 @@ class JDepsReportTask extends DefaultTask {
         if (jdkinternals) baseCmd << '-jdkinternals'
 
         if (JavaVersion.current().java9Compatible) {
+            if (multiRelease) {
+                baseCmd << '--multi-release'
+                baseCmd << multiRelease.toString()
+            }
+
             if (classpath) {
                 baseCmd << '--module-path'
                 baseCmd << classpath
@@ -91,8 +100,8 @@ class JDepsReportTask extends DefaultTask {
 
         compileJava.classpath = project.files()
 
-        if (!configurations) configurations = ['runtime']
-        if (!sourceSets) sourceSets = ['main']
+        // if (!configurations) configurations = ['runtime']
+        // if (!sourceSets) sourceSets = ['main']
 
         sourceSets.each { sc ->
             project.sourceSets[sc].output.files.each { File file ->
@@ -107,26 +116,22 @@ class JDepsReportTask extends DefaultTask {
             }
         }
 
-        configurations.each { c ->
-            project.configurations[c].resolve().each { File file ->
-                if (!file.exists()) {
-                    return // skip
-                }
+        for (String c : configurations) {
+            inspectConfiguration(project.configurations[c], baseCmd, commandOutput)
+        }
 
-                String output = JDepsReportTask.runJDepsOn(baseCmd, file.absolutePath)
-                if (output) {
-                    commandOutput << "\nDependency: ${file.name}\n${output}".toString()
-                }
-            }
+        for (String c : classpaths) {
+            inspectConfiguration(project.configurations[c], baseCmd, commandOutput)
         }
 
         if (commandOutput) {
+            commandOutput = commandOutput.unique()
             if (consoleOutput) println commandOutput.join('\n')
 
             File parentFile = getReportsDir()
             if (!parentFile.exists()) parentFile.mkdirs()
             File logFile = new File(parentFile, 'jdeps-report.txt')
-            logFile.append(commandOutput)            
+            logFile.append(commandOutput)
         }
     }
 
@@ -143,6 +148,28 @@ class JDepsReportTask extends DefaultTask {
         this.reportDir = f
     }
 
+    private void inspectConfiguration(Configuration configuration, List<String> baseCmd, List<String> commandOutput) {
+        configuration.resolve().each { File file ->
+            if (!file.exists()) {
+                return // skip
+            }
+
+            List<String> command = new ArrayList<>(baseCmd)
+            if (JavaVersion.current().java9Compatible) {
+                Integer multiReleaseVersion = JDepsReportTask.resolveMultiReleaseVersion(file.name, multiReleaseJars)
+                if (multiReleaseVersion) {
+                    command << '--multi-release'
+                    command << multiReleaseVersion.toString()
+                }
+            }
+
+            String output = JDepsReportTask.runJDepsOn(command, file.absolutePath)
+            if (output) {
+                commandOutput << "\nDependency: ${file.name}\n${output}".toString()
+            }
+        }
+    }
+
     private static String runJDepsOn(List<String> baseCmd, String path) {
         List<String> cmd = []
         cmd.addAll(baseCmd)
@@ -151,5 +178,14 @@ class JDepsReportTask extends DefaultTask {
         ByteArrayOutputStream out = new ByteArrayOutputStream()
         new ProcessExecutor(cmd).redirectOutput(out).execute().getExitValue()
         return out.toString().trim()
+    }
+
+    private static Integer resolveMultiReleaseVersion(String artifactName, Map<String, Integer> multiReleaseJars) {
+        for (Map.Entry<String, Integer> e : multiReleaseJars.entrySet()) {
+            if (artifactName.matches(e.key)) {
+                return e.value
+            }
+        }
+        null
     }
 }

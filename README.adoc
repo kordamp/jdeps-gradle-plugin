@@ -1,7 +1,7 @@
 = jdeps-gradle-plugin
 :linkattrs:
 :project-name: jdeps-gradle-plugin
-:plugin-version: 0.6.0
+:plugin-version: 0.7.0
 
 image:http://img.shields.io/travis/aalmiray/{project-name}/master.svg["Build Status", link="https://travis-ci.org/aalmiray/{project-name}"]
 image:http://img.shields.io/badge/license-ASF2-blue.svg["Apache License 2", link="http://www.apache.org/licenses/LICENSE-2.0.txt"]
@@ -47,16 +47,19 @@ This will add a `jdepsReport` task to your build, which will analyze the `main` 
 The following properties can be specified in the `jdeps` task configuration
 
 |===
-| Name           | Type         | Default Value
-| verbose        | boolean      | false
-| summary        | boolean      | false
-| profile        | boolean      | false
-| recursive      | boolean      | false
-| jdkinternals   | boolean      | true
-| consoleOutput  | boolean      | true
-| reportsDir     | File         | "${buildDir}/reports/jdeps"
-| configurations | List<String> | ['runtime']
-| sourceSets     | List<String> | ['main']
+| Name             | Type                 | Default Value
+| verbose          | boolean              | false
+| summary          | boolean              | false
+| profile          | boolean              | false
+| recursive        | boolean              | false
+| jdkinternals     | boolean              | true
+| consoleOutput    | boolean              | true
+| reportsDir       | File                 | "${buildDir}/reports/jdeps"
+| configurations   | List<String>         | ['runtime']
+| classpaths       | List<String>         | ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
+| sourceSets       | List<String>         | ['main']
+| multiRelease     | Integer              |
+| multiReleaseJars | Map<String, Integer> | [:]
 |===
 
 You may configure multiple sourceSets and configurations, which will be evaluated in a single report. The following snippet
@@ -67,5 +70,36 @@ shows how this plugin can be configured to run `jdeps` on production and test so
 jdepsReport {
     sourceSets = ['main', 'test']
     configurations = ['testRuntime']
+}
+----
+
+=== MultiRelease JAR support
+
+You may configure a version for the `multiRelease` property in which case this setting will be applied `--multi-release &lt;version&gt;`
+an all dependencies. If you need to check different releases per dependency then use the `MultiReleaseJars` property
+instead, for example
+
+[source]
+----
+jdepsReport {
+    multiReleaseJars = [
+        'foo-1.0.0': 11,  // matches full name
+        'bar.*': 12       // matches all files with 'bar' as prefix
+    ]
+}
+----
+
+=== MonkeyPatching the module
+
+There are times when explicit modular settings may be needed to generate a jdeps report.
+You have the option to specify these settings using a moduleOptions extension on the `jdepsReport task,
+for example
+
+[source]
+----
+jdepsReport {
+    moduleOptions {
+        addModules = ['com.acme.foo']
+    }
 }
 ----
