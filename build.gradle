@@ -20,6 +20,7 @@ plugins {
     id 'groovy'
     id 'idea'
     id 'org.kordamp.gradle.kordamp-parentpom' version '1.6.0'
+    id 'org.kordamp.gradle.bintray'           version '0.24.0'
     id 'org.kordamp.gradle.plugin'            version '0.24.0'
 }
 
@@ -66,3 +67,5 @@ compileGroovy {
     sourceCompatibility = project.sourceCompatibility
     targetCompatibility = project.targetCompatibility
 }
+
+task publishRelease(dependsOn: [bintrayUpload, publishPlugins]) {}
