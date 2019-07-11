@@ -24,6 +24,7 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.compile.JavaCompile
 import org.zeroturnaround.exec.ProcessExecutor
@@ -100,16 +101,18 @@ class JDepsReportTask extends DefaultTask {
 
         compileJava.classpath = project.files()
 
-        // if (!configurations) configurations = ['runtime']
-        // if (!sourceSets) sourceSets = ['main']
+        project.logger.info("jdeps version is ${executeCommand(['jdeps', '-version'])}")
 
         sourceSets.each { sc ->
-            project.sourceSets[sc].output.files.each { File file ->
+            SourceSet sourceSet = project.sourceSets[sc]
+            project.logger.info("Running jdeps on sourceSet ${sourceSet.name}")
+            sourceSet.output.files.each { File file ->
                 if (!file.exists()) {
                     return // skip
                 }
 
-                String output = JDepsReportTask.runJDepsOn(baseCmd, file.absolutePath)
+                project.logger.info("jdeps command set to ${baseCmd.join(' ')}")
+                String output = JDepsReportTask.executeCommandOn(baseCmd, file.absolutePath)
                 if (output) {
                     commandOutput << "\nProject: ${project.name}\n${output}".toString()
                 }
@@ -149,6 +152,7 @@ class JDepsReportTask extends DefaultTask {
     }
 
     private void inspectConfiguration(Configuration configuration, List<String> baseCmd, List<String> commandOutput) {
+        project.logger.info("Running jdeps on configuration ${configuration.name}")
         configuration.resolve().each { File file ->
             if (!file.exists()) {
                 return // skip
@@ -158,23 +162,28 @@ class JDepsReportTask extends DefaultTask {
             if (JavaVersion.current().java9Compatible) {
                 Integer multiReleaseVersion = JDepsReportTask.resolveMultiReleaseVersion(file.name, multiReleaseJars)
                 if (multiReleaseVersion) {
-                    command << '--multi-release'
-                    command << multiReleaseVersion.toString()
+                    command.add(1, multiReleaseVersion.toString())
+                    command.add(1, '--multi-release')
                 }
             }
 
-            String output = JDepsReportTask.runJDepsOn(command, file.absolutePath)
+            project.logger.info("jdeps command set to: ${command.join(' ')} ${file.absolutePath}")
+            String output = JDepsReportTask.executeCommandOn(command, file.absolutePath)
             if (output) {
                 commandOutput << "\nDependency: ${file.name}\n${output}".toString()
             }
         }
     }
 
-    private static String runJDepsOn(List<String> baseCmd, String path) {
+    private static String executeCommandOn(List<String> baseCmd, String path) {
         List<String> cmd = []
         cmd.addAll(baseCmd)
         cmd.add(path)
 
+        return executeCommand(cmd)
+    }
+
+    private static String executeCommand(List<String> cmd) {
         ByteArrayOutputStream out = new ByteArrayOutputStream()
         new ProcessExecutor(cmd).redirectOutput(out).execute().getExitValue()
         return out.toString().trim()
