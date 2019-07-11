@@ -18,6 +18,7 @@
 package org.kordamp.gradle.jdktools
 
 import groovy.transform.CompileStatic
+import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
@@ -35,10 +36,14 @@ class JDepsPlugin implements Plugin<Project> {
 
         project.plugins.apply(JavaBasePlugin)
 
-        project.tasks.findByName('check').dependsOn << project.task('jdepsReport',
-            type: JDepsReportTask,
-            group: BasePlugin.BUILD_GROUP,
-            dependsOn: 'classes',
-            description: 'Generate a jdeps report on project classes and dependencies')
+        project.tasks.findByName('check').dependsOn << project.tasks.register('jdepsReport', JDepsReportTask,
+            new Action<JDepsReportTask>() {
+                @Override
+                void execute(JDepsReportTask t) {
+                    t.dependsOn('classes')
+                    t.group = BasePlugin.BUILD_GROUP
+                    t.description = 'Generate a jdeps report on project classes and dependencies'
+                }
+            })
     }
 }
