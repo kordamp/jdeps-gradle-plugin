@@ -19,9 +19,9 @@
 plugins {
     id 'groovy'
     id 'idea'
-    id 'org.kordamp.gradle.kordamp-parentpom' version '1.6.0'
-    id 'org.kordamp.gradle.bintray'           version '0.24.0'
-    id 'org.kordamp.gradle.plugin'            version '0.24.0'
+    id 'org.kordamp.gradle.kordamp-parentpom' version '1.8.0'
+    id 'org.kordamp.gradle.bintray'           version '0.29.0'
+    id 'org.kordamp.gradle.plugin'            version '0.29.0'
 }
 
 config {
