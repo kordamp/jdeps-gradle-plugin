@@ -42,7 +42,7 @@ config {
     plugin {
         enabled             = true
         id                  = 'org.kordamp.gradle.jdeps'
-        implementationClass = 'org.kordamp.gradle.jdktools.JDepsPlugin'
+        implementationClass = 'org.kordamp.gradle.plugin.jdeps.JDepsPlugin'
     }
 
     bintray {
@@ -53,6 +53,16 @@ config {
 dependencies {
     compileOnly gradleApi()
     api "org.zeroturnaround:zt-exec:$ztexecVersion"
+}
+
+processResources {
+    filesMatching(['**/*.properties']) {
+        expand(
+            'version': project.version,
+            'id': 'jdeps',
+            'name': 'Jdeps Gradle plugin'
+        )
+    }
 }
 
 task publishRelease(dependsOn: [bintrayUpload, publishPlugins]) {}

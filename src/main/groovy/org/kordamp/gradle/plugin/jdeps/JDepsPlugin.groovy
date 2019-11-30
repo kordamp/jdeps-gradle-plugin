@@ -15,35 +15,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kordamp.gradle.jdktools
+package org.kordamp.gradle.plugin.jdeps
 
 import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.plugins.BasePlugin
-import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.TaskProvider
+import org.kordamp.gradle.plugin.jdeps.tasks.JDepsReportTask
 
 /**
  * @author Andres Almiray
  */
 @CompileStatic
 class JDepsPlugin implements Plugin<Project> {
-    Project project
-
     void apply(Project project) {
-        this.project = project
+        Banner.display(project)
 
-        project.plugins.apply(JavaBasePlugin)
+        project.plugins.apply(JavaPlugin)
 
-        project.tasks.findByName('check').dependsOn << project.tasks.register('jdepsReport', JDepsReportTask,
+        TaskProvider<JDepsReportTask> report = project.tasks.register('jdepsReport', JDepsReportTask,
             new Action<JDepsReportTask>() {
                 @Override
                 void execute(JDepsReportTask t) {
-                    t.dependsOn('classes')
+                    t.dependsOn(project.tasks.named('classes'))
                     t.group = BasePlugin.BUILD_GROUP
                     t.description = 'Generate a jdeps report on project classes and dependencies'
                 }
             })
+
+        project.tasks.named('check').configure(new Action<Task>() {
+            @Override
+            void execute(Task t) {
+                t.dependsOn(report)
+            }
+        })
     }
 }
