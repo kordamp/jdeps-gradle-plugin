@@ -66,5 +66,3 @@ processResources {
         )
     }
 }
-
-task publishRelease(dependsOn: [bintrayUpload, publishPlugins]) {}
