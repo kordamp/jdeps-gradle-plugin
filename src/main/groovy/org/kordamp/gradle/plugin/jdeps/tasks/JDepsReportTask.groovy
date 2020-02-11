@@ -17,6 +17,7 @@
  */
 package org.kordamp.gradle.plugin.jdeps.tasks
 
+import kotlin.text.Regex
 import org.gradle.api.DefaultTask
 import org.gradle.api.JavaVersion
 import org.gradle.api.artifacts.Configuration
@@ -45,6 +46,7 @@ class JDepsReportTask extends DefaultTask {
     @Input @Optional List<String> sourceSets = ['main']
     @Input @Optional Integer multiRelease
     @Input @Optional Map<String, Integer> multiReleaseJars = [:]
+    @Input @Optional String include = null
 
     private Object reportDir
 
@@ -59,7 +61,7 @@ class JDepsReportTask extends DefaultTask {
         String classpath = compileJava.classpath.asPath
         List<String> compilerArgs = compileJava.options.compilerArgs
         /** #prevent global leak with per module record output for multimodule. 
-         For much larger project, Could be furher improved with a buffer so it won't eat the heap further...
+         For much larger project, Could be further improved with a buffer so it won't eat the heap further...
          **/
         List<String> commandOutput = []
 
@@ -69,6 +71,11 @@ class JDepsReportTask extends DefaultTask {
         if (profile) baseCmd << '-profile'
         if (recursive) baseCmd << '-recursive'
         if (jdkinternals) baseCmd << '-jdkinternals'
+        if (include) {
+            baseCmd << '-include'
+            Regex regex = new Regex(include)
+            baseCmd << regex.pattern
+        }
 
         if (JavaVersion.current().java9Compatible) {
             if (multiRelease) {
