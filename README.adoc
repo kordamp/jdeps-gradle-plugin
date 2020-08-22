@@ -65,6 +65,7 @@ The following properties can be specified in the `jdeps` task configuration
 | sourceSets       | List<String>         | ['main']
 | multiRelease     | Integer              |
 | multiReleaseJars | Map<String, Integer> | [:]
+| include          | String               | null
 |===
 
 You may configure multiple sourceSets and configurations, which will be evaluated in a single report. The following snippet
@@ -106,5 +107,18 @@ jdepsReport {
     moduleOptions {
         addModules = ['com.acme.foo']
     }
+}
+----
+
+=== Restricting jdeps scan to specific classes
+
+Using the 'include' option with a regex will ensure that only classes of your choosing are scanned.
+This is particularly useful for avoiding Java 9+ jdk.unsupported errors for dependency classes that are
+beyond your control and as yet do not have a release that complies with the Java 9+ standard.
+
+[source]
+----
+jdepsReport {
+    include = 'com.myorg.*|org.anotherorg.*'
 }
 ----
