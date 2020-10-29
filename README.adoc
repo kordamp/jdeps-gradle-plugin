@@ -58,6 +58,7 @@ The following properties can be specified in the `jdeps` task configuration
 | profile          | boolean              | false
 | recursive        | boolean              | false
 | jdkinternals     | boolean              | true
+| apionly          | boolean              | false
 | consoleOutput    | boolean              | true
 | reportsDir       | File                 | "${buildDir}/reports/jdeps"
 | configurations   | List<String>         | ['runtime']

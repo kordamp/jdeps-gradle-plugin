@@ -40,6 +40,7 @@ class JDepsReportTask extends DefaultTask {
     @Input boolean recursive = false
     @Input boolean jdkinternals = true
     @Input boolean consoleOutput = true
+    @Input boolean apionly = false
     @Input @Optional List<String> configurations = ['runtime']
     @Input @Optional List<String> classpaths = ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
     @Input @Optional List<String> sourceSets = ['main']
@@ -58,17 +59,15 @@ class JDepsReportTask extends DefaultTask {
         JavaCompile compileJava = project.tasks.findByName(JavaPlugin.COMPILE_JAVA_TASK_NAME)
         String classpath = compileJava.classpath.asPath
         List<String> compilerArgs = compileJava.options.compilerArgs
-        /** #prevent global leak with per module record output for multimodule. 
-         For much larger project, Could be furher improved with a buffer so it won't eat the heap further...
-         **/
         List<String> commandOutput = []
 
         final List<String> baseCmd = ['jdeps']
         if (summary) baseCmd << '-s'
         if (verbose) baseCmd << '-v'
-        if (profile) baseCmd << '-profile'
-        if (recursive) baseCmd << '-recursive'
+        if (profile) baseCmd << '-P'
+        if (recursive) baseCmd << '-R'
         if (jdkinternals) baseCmd << '-jdkinternals'
+        if (apionly) baseCmd << '-apionly'
 
         if (JavaVersion.current().java9Compatible) {
             if (multiRelease) {
