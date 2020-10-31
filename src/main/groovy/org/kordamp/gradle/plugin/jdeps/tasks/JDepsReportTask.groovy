@@ -17,62 +17,205 @@
  */
 package org.kordamp.gradle.plugin.jdeps.tasks
 
+import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
 import org.gradle.api.JavaVersion
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.options.Option
+import org.kordamp.gradle.property.BooleanState
+import org.kordamp.gradle.property.IntegerState
+import org.kordamp.gradle.property.ListState
+import org.kordamp.gradle.property.MapState
+import org.kordamp.gradle.property.SimpleBooleanState
+import org.kordamp.gradle.property.SimpleIntegerState
+import org.kordamp.gradle.property.SimpleListState
+import org.kordamp.gradle.property.SimpleMapState
 import org.zeroturnaround.exec.ProcessExecutor
 
 /**
  * @author Andres Almiray
  * @author Mark Paluch
  */
+@CompileStatic
 class JDepsReportTask extends DefaultTask {
-    @Input boolean verbose = false
-    @Input boolean summary = false
-    @Input boolean profile = false
-    @Input boolean recursive = false
-    @Input boolean jdkinternals = true
-    @Input boolean consoleOutput = true
-    @Input boolean apionly = false
-    @Input @Optional List<String> configurations = ['runtime']
-    @Input @Optional List<String> classpaths = ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
-    @Input @Optional List<String> sourceSets = ['main']
-    @Input @Optional Integer multiRelease
-    @Input @Optional Map<String, Integer> multiReleaseJars = [:]
+    private final BooleanState verbose
+    private final BooleanState summary
+    private final BooleanState profile
+    private final BooleanState recursive
+    private final BooleanState jdkinternals
+    private final BooleanState consoleOutput
+    private final BooleanState apionly
+    private final ListState configurations
+    private final ListState classpaths
+    private final ListState sourceSets
+    private final IntegerState multiRelease
+    private final MapState multiReleaseJars
 
     private Object reportDir
 
     JDepsReportTask() {
         extensions.create('moduleOptions', ModuleOptions)
+
+        verbose = SimpleBooleanState.of(this, 'jdeps.verbose', false)
+        summary = SimpleBooleanState.of(this, 'jdeps.summary', false)
+        profile = SimpleBooleanState.of(this, 'jdeps.profile', false)
+        recursive = SimpleBooleanState.of(this, 'jdeps.recursive', false)
+        jdkinternals = SimpleBooleanState.of(this, 'jdeps.jdkinternals', true)
+        consoleOutput = SimpleBooleanState.of(this, 'jdeps.console.output', true)
+        apionly = SimpleBooleanState.of(this, 'jdeps.apionly', false)
+
+        configurations = SimpleListState.of(this, 'jdeps.configurations', ['runtime'])
+        classpaths = SimpleListState.of(this, 'jdeps.classpaths', ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'])
+        sourceSets = SimpleListState.of(this, 'jdeps.sourcesets', ['main'])
+
+        multiRelease = SimpleIntegerState.of(this, 'jdeps.multi.release', -1)
+
+        multiReleaseJars = SimpleMapState.of(this, 'jdeps.multi.release.jars', [:])
     }
+
+    @Option(option = 'jdeps-verbose', description = 'Print all class level dependences')
+    void setVerbose(boolean value) { verbose.property.set(value) }
+
+    @Option(option = 'jdeps-summary', description = 'Print dependency summary only')
+    void setSummary(boolean value) { summary.property.set(value) }
+
+    @Option(option = 'jdeps-profile', description = 'Show profile containing a package')
+    void setProfile(boolean value) { profile.property.set(value) }
+
+    @Option(option = 'jdeps-recursive', description = 'Recursively traverse all run-time dependences')
+    void setRecursive(boolean value) { recursive.property.set(value) }
+
+    @Option(option = 'jdeps-jdkinternals', description = 'Finds class-level dependences on JDK internal APIs')
+    void setJdkinternals(boolean value) { jdkinternals.property.set(value) }
+
+    @Option(option = 'jdeps-console-output', description = 'Print out report to console')
+    void setConsoleOutput(boolean value) { consoleOutput.property.set(value) }
+
+    @Option(option = 'jdeps-apionly', description = 'Restrict analysis to APIs')
+    void setApionly(boolean value) { apionly.property.set(value) }
+
+    @Option(option = 'jdeps-configurations', description = 'Configurations to be analyzed')
+    void setConfigurations(String value) { configurations.property.set(value.split(',').toList()) }
+
+    @Option(option = 'jdeps-classpaths', description = 'Classpaths to be analyzed')
+    void setClasspaths(String value) { classpaths.property.set(value.split(',').toList()) }
+
+    @Option(option = 'jdeps-sourcesets', description = 'SourceSets to be analyzed')
+    void setSourceSets(String value) { sourceSets.property.set(value.split(',').toList()) }
+
+    @Option(option = 'jdeps-multi-release', description = 'Set the multi-release level')
+    void setMultiRelease(String value) { multiRelease.property.set(Integer.valueOf(value)) }
+
+    @Internal
+    Property<Boolean> getVerbose() { verbose.property }
+
+    @Input
+    Provider<Boolean> getResolvedVerbose() { verbose.provider }
+
+    @Internal
+    Property<Boolean> getSummary() { summary.property }
+
+    @Input
+    Provider<Boolean> getResolvedSummary() { summary.provider }
+
+    @Internal
+    Property<Boolean> getProfile() { profile.property }
+
+    @Input
+    Provider<Boolean> getResolvedProfile() { profile.provider }
+
+    @Internal
+    Property<Boolean> getRecursive() { recursive.property }
+
+    @Input
+    Provider<Boolean> getResolvedRecursive() { recursive.provider }
+
+    @Internal
+    Property<Boolean> getJdkinternals() { jdkinternals.property }
+
+    @Input
+    Provider<Boolean> getResolvedJdkinternals() { jdkinternals.provider }
+
+    @Internal
+    Property<Boolean> getConsoleOutput() { consoleOutput.property }
+
+    @Input
+    Provider<Boolean> getResolvedConsoleOutput() { consoleOutput.provider }
+
+    @Internal
+    Property<Boolean> getApionly() { apionly.property }
+
+    @Input
+    Provider<Boolean> getResolvedApionly() { apionly.provider }
+
+    @Internal
+    ListProperty<String> getConfigurations() { configurations.property }
+
+    @Input
+    @Optional
+    Provider<List<String>> getResolvedConfigurations() { configurations.provider }
+
+    @Internal
+    ListProperty<String> getClasspaths() { classpaths.property }
+
+    @Input
+    @Optional
+    Provider<List<String>> getResolvedClasspaths() { classpaths.provider }
+
+    @Internal
+    ListProperty<String> getSourceSets() { sourceSets.property }
+
+    @Input
+    @Optional
+    Provider<List<String>> getResolvedSourceSets() { sourceSets.provider }
+
+    @Internal
+    Property<Integer> getMultiRelease() { multiRelease.property }
+
+    @Input
+    Provider<Integer> getResolvedMultiRelease() { multiRelease.provider }
+
+    @Internal
+    MapProperty<String, String> getMultiReleaseJars() { multiReleaseJars.property }
+
+    @Input
+    @Optional
+    Provider<Map<String, String>> getResolvedMultiReleaseJars() { multiReleaseJars.provider }
 
     @TaskAction
     void evaluate() {
         ModuleOptions moduleOptions = extensions.getByType(ModuleOptions)
-        JavaCompile compileJava = project.tasks.findByName(JavaPlugin.COMPILE_JAVA_TASK_NAME)
-        String classpath = compileJava.classpath.asPath
-        List<String> compilerArgs = compileJava.options.compilerArgs
+        TaskProvider<JavaCompile> compileJava = project.tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME, JavaCompile)
+        String classpath = compileJava.get().classpath.asPath
+        List<String> compilerArgs = compileJava.get().options.compilerArgs
         List<String> commandOutput = []
 
         final List<String> baseCmd = ['jdeps']
-        if (summary) baseCmd << '-s'
-        if (verbose) baseCmd << '-v'
-        if (profile) baseCmd << '-P'
-        if (recursive) baseCmd << '-R'
-        if (jdkinternals) baseCmd << '-jdkinternals'
-        if (apionly) baseCmd << '-apionly'
+        if (resolvedSummary.get()) baseCmd << '-s'
+        if (resolvedVerbose.get()) baseCmd << '-v'
+        if (resolvedProfile.get()) baseCmd << '-P'
+        if (resolvedRecursive.get()) baseCmd << '-R'
+        if (resolvedJdkinternals.get()) baseCmd << '-jdkinternals'
+        if (resolvedApionly.get()) baseCmd << '-apionly'
 
         if (JavaVersion.current().java9Compatible) {
-            if (multiRelease) {
+            if (resolvedMultiRelease.get() > -1) {
                 baseCmd << '--multi-release'
-                baseCmd << multiRelease.toString()
+                baseCmd << resolvedMultiRelease.get().toString()
             }
 
             if (classpath) {
@@ -98,12 +241,13 @@ class JDepsReportTask extends DefaultTask {
             }
         }
 
-        compileJava.classpath = project.files()
+        compileJava.get().classpath = project.files()
 
         project.logger.info("jdeps version is ${executeCommand(['jdeps', '-version'])}")
 
-        sourceSets.each { sc ->
-            SourceSet sourceSet = project.sourceSets[sc]
+        JavaPluginConvention convention = project.convention.getPlugin(JavaPluginConvention)
+        resolvedSourceSets.get().each { sc ->
+            SourceSet sourceSet = convention.sourceSets.findByName(sc)
             project.logger.info("Running jdeps on sourceSet ${sourceSet.name}")
             sourceSet.output.files.each { File file ->
                 if (!file.exists()) {
@@ -118,17 +262,17 @@ class JDepsReportTask extends DefaultTask {
             }
         }
 
-        for (String c : configurations) {
-            inspectConfiguration(project.configurations[c], baseCmd, commandOutput)
+        for (String c : resolvedConfigurations.get()) {
+            inspectConfiguration(project.configurations[c.trim()], baseCmd, commandOutput)
         }
 
-        for (String c : classpaths) {
-            inspectConfiguration(project.configurations[c], baseCmd, commandOutput)
+        for (String c : resolvedClasspaths.get()) {
+            inspectConfiguration(project.configurations[c.trim()], baseCmd, commandOutput)
         }
 
         if (commandOutput) {
             commandOutput = commandOutput.unique()
-            if (consoleOutput) println commandOutput.join('\n')
+            if (resolvedConsoleOutput.get()) println commandOutput.join('\n')
 
             File parentFile = getReportsDir()
             if (!parentFile.exists()) parentFile.mkdirs()
@@ -159,9 +303,9 @@ class JDepsReportTask extends DefaultTask {
 
             List<String> command = new ArrayList<>(baseCmd)
             if (JavaVersion.current().java9Compatible) {
-                Integer multiReleaseVersion = JDepsReportTask.resolveMultiReleaseVersion(file.name, multiReleaseJars)
+                String multiReleaseVersion = JDepsReportTask.resolveMultiReleaseVersion(file.name, resolvedMultiReleaseJars.get())
                 if (multiReleaseVersion) {
-                    command.add(1, multiReleaseVersion.toString())
+                    command.add(1, multiReleaseVersion)
                     command.add(1, '--multi-release')
                 }
             }
@@ -188,10 +332,10 @@ class JDepsReportTask extends DefaultTask {
         return out.toString().trim()
     }
 
-    private static Integer resolveMultiReleaseVersion(String artifactName, Map<String, Integer> multiReleaseJars) {
-        for (Map.Entry<String, Integer> e : multiReleaseJars.entrySet()) {
-            if (artifactName.matches(e.key)) {
-                return e.value
+    private static String resolveMultiReleaseVersion(String artifactName, Map<String, String> multiReleaseJars) {
+        for (Map.Entry<String, String> e : multiReleaseJars.entrySet()) {
+            if (artifactName.matches(e.key.trim())) {
+                return e.value.trim()
             }
         }
         null

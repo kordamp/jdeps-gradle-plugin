@@ -4,9 +4,8 @@
 :project-repo:    maven
 :project-name:    jdeps-gradle-plugin
 :project-group:   org.kordamp.gradle
-:project-version: 0.11.0
+:project-version: 0.12.0
 
-image:http://img.shields.io/travis/{project-owner}/{project-name}/master.svg["Build Status (travis)", link="https://travis-ci.org/{project-owner}/{project-name}"]
 image:https://github.com/{project-owner}/{project-name}/workflows/Build/badge.svg["Build Status", link="https://github.com/{project-owner}/{project-name}/actions"]
 image:http://img.shields.io/badge/license-ASL2-blue.svg["ASL2 Licensed", link="http://opensource.org/licenses/ASL2"]
 image:https://api.bintray.com/packages/{project-owner}/{project-repo}/{project-name}/images/download.svg[link="https://bintray.com/{project-owner}/{project-repo}/{project-name}/_latestVersion"]
@@ -51,22 +50,34 @@ This will add a `jdepsReport` task to your build, which will analyze the `main` 
 
 The following properties can be specified in the `jdeps` task configuration
 
+[options="header"]
 |===
-| Name             | Type                 | Default Value
-| verbose          | boolean              | false
-| summary          | boolean              | false
-| profile          | boolean              | false
-| recursive        | boolean              | false
-| jdkinternals     | boolean              | true
-| apionly          | boolean              | false
-| consoleOutput    | boolean              | true
-| reportsDir       | File                 | "${buildDir}/reports/jdeps"
-| configurations   | List<String>         | ['runtime']
-| classpaths       | List<String>         | ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
-| sourceSets       | List<String>         | ['main']
-| multiRelease     | Integer              |
-| multiReleaseJars | Map<String, Integer> | [:]
+| Name             | Option               | Property                 | Type                | Default Value
+| verbose          | jdeps-verbose        | jdeps.verbose            | boolean             | false
+| summary          | jdeps-summary        | jdeps.summary            | boolean             | false
+| profile          | jdeps-profile        | jdeps.profile            | boolean             | false
+| recursive        | jdeps-recursive      | jdeps.recursive          | boolean             | false
+| jdkinternals     | jdeps-jdkinternals   | jdeps.jdkinternals       | boolean             | true
+| apionly          | jdeps-apionly        | jdeps.apionly            | boolean             | false
+| consoleOutput    | jdeps-console-output | jdeps.console.output     | boolean             | true
+| reportsDir       |                      |                          | File                | "${buildDir}/reports/jdeps"
+| configurations   | jdeps-configurations | jdeps.configurations     | List<String>        | ['runtime']
+| classpaths       | jdeps-classpaths     | jdeps.classpaths         | List<String>        | ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
+| sourceSets       | jdeps-sourcesets     | jdeps.sourcesets         | List<String>        | ['main']
+| multiRelease     | jdeps-multi-release  | jdeps.multi.release      | Integer             |
+| multiReleaseJars |                      | jdeps.multi.release.jars | Map<String, String> | [:]
 |===
+
+Task properties may be defined on the command line using their option name, or their property name, such as
+
+[source]
+----
+$ gradle jdeps --jdeps-verbose
+$ gradle jdeps -Pjdeps.verbose=true
+$ gradle jdeps -Djdeps.verbose=true
+$ set JDEPS_VERBOSE=true
+$ gradle jdeps
+----
 
 You may configure multiple sourceSets and configurations, which will be evaluated in a single report. The following snippet
 shows how this plugin can be configured to run `jdeps` on production and test sources
@@ -89,8 +100,8 @@ instead, for example
 ----
 jdepsReport {
     multiReleaseJars = [
-        'foo-1.0.0': 11,  // matches full name
-        'bar.*': 12       // matches all files with 'bar' as prefix
+        'foo-1.0.0': '11',  // matches full name
+        'bar.*':     '12'   // matches all files with 'bar' as prefix
     ]
 }
 ----
