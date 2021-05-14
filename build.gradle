@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright 2017-2020 Andres Almiray.
+ * Copyright 2017-2021 Andres Almiray.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,13 @@ plugins {
     id 'java-library'
     id 'groovy'
     id 'org.kordamp.gradle.groovy-project'
-    id 'org.kordamp.gradle.bintray'
     id 'org.kordamp.gradle.plugin'
+}
+
+project.rootProject.ext.theVersion = file('VERSION').text.trim()
+
+allprojects { p ->
+    p.version = p.rootProject.ext.theVersion
 }
 
 config {
@@ -47,15 +52,10 @@ config {
             implementationClass = 'org.kordamp.gradle.plugin.jdeps.JDepsPlugin'
         }
     }
-
-    bintray {
-        skipMavenSync = true
-    }
 }
 
 repositories {
     gradlePluginPortal()
-    mavenLocal()
 }
 
 dependencies {
