@@ -41,8 +41,8 @@ plugins {
 }
 ----
 
-This will add a `jdepsReport` task to your build, which will analyze the `main` sourceSets and all dependencies found in the
-`runtime` configuration.
+This will add a `jdepsReport` task to your build, which will analyze the `main` sourceSets and all dependencies found
+in the `runtime` (Gradle 6) or `runtimeOnly` (Gradle 7+) configuration.
 
 == Configuration
 === Plugin configuration
@@ -60,7 +60,8 @@ The following properties can be specified in the `jdeps` task configuration
 | apionly          | jdeps-apionly        | jdeps.apionly            | boolean             | false
 | consoleOutput    | jdeps-console-output | jdeps.console.output     | boolean             | true
 | reportsDir       |                      |                          | File                | "${buildDir}/reports/jdeps"
-| configurations   | jdeps-configurations | jdeps.configurations     | List<String>        | ['runtime']
+| configurations   | jdeps-configurations | jdeps.configurations     | List<String>        | ['runtime'] (Gradle 6) +
+  ['runtimeOnly'] (Gradle 7+)
 | classpaths       | jdeps-classpaths     | jdeps.classpaths         | List<String>        | ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
 | sourceSets       | jdeps-sourcesets     | jdeps.sourcesets         | List<String>        | ['main']
 | multiRelease     | jdeps-multi-release  | jdeps.multi.release      | Integer             |
@@ -85,7 +86,7 @@ shows how this plugin can be configured to run `jdeps` on production and test so
 ----
 jdepsReport {
     sourceSets = ['main', 'test']
-    configurations = ['testRuntime']
+    configurations = ['testRuntimeOnly']
 }
 ----
 
