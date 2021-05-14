@@ -44,6 +44,7 @@ import org.kordamp.gradle.property.SimpleBooleanState
 import org.kordamp.gradle.property.SimpleIntegerState
 import org.kordamp.gradle.property.SimpleListState
 import org.kordamp.gradle.property.SimpleMapState
+import org.kordamp.gradle.util.PluginUtils
 import org.zeroturnaround.exec.ProcessExecutor
 
 /**
@@ -78,7 +79,7 @@ class JDepsReportTask extends DefaultTask {
         consoleOutput = SimpleBooleanState.of(this, 'jdeps.console.output', true)
         apionly = SimpleBooleanState.of(this, 'jdeps.apionly', false)
 
-        configurations = SimpleListState.of(this, 'jdeps.configurations', ['runtime'])
+        configurations = SimpleListState.of(this, 'jdeps.configurations', [])
         classpaths = SimpleListState.of(this, 'jdeps.classpaths', ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'])
         sourceSets = SimpleListState.of(this, 'jdeps.sourcesets', ['main'])
 
@@ -262,7 +263,16 @@ class JDepsReportTask extends DefaultTask {
             }
         }
 
-        for (String c : resolvedConfigurations.get()) {
+        List<String> confs = resolvedConfigurations.get()
+        if (!confs) {
+            if (PluginUtils.isGradleCompatible(7)) {
+                confs.add('runtimeOnly')
+            } else {
+                confs.add('runtime')
+            }
+        }
+
+        for (String c : confs) {
             inspectConfiguration(project.configurations[c.trim()], baseCmd, commandOutput)
         }
 
