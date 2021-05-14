@@ -86,7 +86,7 @@ shows how this plugin can be configured to run `jdeps` on production and test so
 ----
 jdepsReport {
     sourceSets = ['main', 'test']
-    configurations = ['testRuntimeOnly']
+    configurations = ['testRuntimeClasspath']
 }
 ----
 
