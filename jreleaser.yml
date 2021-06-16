@@ -26,6 +26,8 @@ project:
   authors:
     - Andres Almiray
   license: Apache-2.0
+  extraProperties:
+    inceptionYear: 2015
 
 release:
   github:
