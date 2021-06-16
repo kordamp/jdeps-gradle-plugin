@@ -265,7 +265,7 @@ class JDepsReportTask extends DefaultTask {
 
         List<String> confs = new ArrayList<>(resolvedConfigurations.get())
         if (!confs) {
-            if (PluginUtils.isGradleCompatible(7)) {
+            if (PluginUtils.isGradle7Compatible()) {
                 confs.add('runtimeClasspath')
             } else {
                 confs.add('runtime')
