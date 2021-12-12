@@ -67,6 +67,7 @@ The following properties can be specified in the `jdeps` task configuration
 | sourceSets       | jdeps-sourcesets      | jdeps.sourcesets         | List<String>        | ['main']
 | multiRelease     | jdeps-multi-release   | jdeps.multi.release      | Integer             |
 | multiReleaseJars |                       | jdeps.multi.release.jars | Map<String, String> | [:]
+| dotOutput        | jdeps-dot-output      | jdeps.dot.output         | File                |
 |===
 
 Task properties may be defined on the command line using their option name, or their property name, such as

@@ -21,6 +21,8 @@ import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
 import org.gradle.api.JavaVersion
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.file.RegularFile
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.ListProperty
@@ -40,10 +42,12 @@ import org.kordamp.gradle.property.BooleanState
 import org.kordamp.gradle.property.IntegerState
 import org.kordamp.gradle.property.ListState
 import org.kordamp.gradle.property.MapState
+import org.kordamp.gradle.property.RegularFileState
 import org.kordamp.gradle.property.SimpleBooleanState
 import org.kordamp.gradle.property.SimpleIntegerState
 import org.kordamp.gradle.property.SimpleListState
 import org.kordamp.gradle.property.SimpleMapState
+import org.kordamp.gradle.property.SimpleRegularFileState
 import org.kordamp.gradle.util.PluginUtils
 import org.zeroturnaround.exec.ProcessExecutor
 
@@ -70,6 +74,7 @@ class JDepsReportTask extends DefaultTask {
     private final ListState sourceSets
     private final IntegerState multiRelease
     private final MapState multiReleaseJars
+    private final RegularFileState dotOutput
 
     private Object reportDir
 
@@ -92,6 +97,7 @@ class JDepsReportTask extends DefaultTask {
         multiRelease = SimpleIntegerState.of(this, 'jdeps.multi.release', -1)
 
         multiReleaseJars = SimpleMapState.of(this, 'jdeps.multi.release.jars', [:])
+        dotOutput = SimpleRegularFileState.of(this, 'jdeps.dot.output', (RegularFile) null)
     }
 
     @Option(option = 'jdeps-verbose', description = 'Print all class level dependences')
@@ -129,6 +135,9 @@ class JDepsReportTask extends DefaultTask {
 
     @Option(option = 'jdeps-multi-release', description = 'Set the multi-release level')
     void setMultiRelease(String value) { multiRelease.property.set(Integer.valueOf(value)) }
+
+    @Option(option = 'jdeps-dot-output', description = 'Destination directory for DOT file output')
+    void setDotOutput(String value) { dotOutput.property.set(project.file(value)) }
 
     @Internal
     Property<Boolean> getVerbose() { verbose.property }
@@ -212,6 +221,13 @@ class JDepsReportTask extends DefaultTask {
     @Optional
     Provider<Map<String, String>> getResolvedMultiReleaseJars() { multiReleaseJars.provider }
 
+    @Internal
+    RegularFileProperty getDotOutput() { dotOutput.property }
+
+    @Input
+    @Optional
+    Provider<RegularFile> getResolvedDotOutput() { dotOutput.provider }
+
     @TaskAction
     void evaluate() {
         ModuleOptions moduleOptions = extensions.getByType(ModuleOptions)
@@ -227,6 +243,10 @@ class JDepsReportTask extends DefaultTask {
         if (resolvedRecursive.get()) baseCmd << '-R'
         if (resolvedJdkinternals.get()) baseCmd << '-jdkinternals'
         if (resolvedApionly.get()) baseCmd << '-apionly'
+        if (getResolvedDotOutput().present) {
+            baseCmd << '-dotoutput'
+            baseCmd << getResolvedDotOutput().get().asFile.absolutePath
+        }
 
         if (JavaVersion.current().java9Compatible) {
             if (resolvedMultiRelease.get() > -1) {
@@ -277,7 +297,7 @@ class JDepsReportTask extends DefaultTask {
                 }
 
                 List<String> warnings = getWarnings(output)
-                if (warnings && failOnWarning.getOrElse(false)) {
+                if (warnings && getResolvedFailOnWarning().get()) {
                     throw new IllegalStateException("jdeps reported errors/warnings: " +
                         System.lineSeparator() +
                         warnings.join(System.lineSeparator()))
@@ -349,7 +369,7 @@ class JDepsReportTask extends DefaultTask {
             }
 
             List<String> warnings = getWarnings(output)
-            if (warnings && failOnWarning.getOrElse(false)) {
+            if (warnings && getResolvedFailOnWarning().get()) {
                 throw new IllegalStateException("jdeps reported errors/warnings: " +
                     System.lineSeparator() +
                     warnings.join(System.lineSeparator()))
