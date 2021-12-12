@@ -47,12 +47,16 @@ import org.kordamp.gradle.property.SimpleMapState
 import org.kordamp.gradle.util.PluginUtils
 import org.zeroturnaround.exec.ProcessExecutor
 
+import java.util.regex.Pattern
+
 /**
  * @author Andres Almiray
  * @author Mark Paluch
  */
 @CompileStatic
 class JDepsReportTask extends DefaultTask {
+    private static final Pattern WARNING = Pattern.compile("^(?:Warning:.*)|(?:.+->\\s([a-zA-Z\\.]+)\\s+JDK internal API.*)")
+
     private final BooleanState verbose
     private final BooleanState summary
     private final BooleanState profile
@@ -60,6 +64,7 @@ class JDepsReportTask extends DefaultTask {
     private final BooleanState jdkinternals
     private final BooleanState consoleOutput
     private final BooleanState apionly
+    private final BooleanState failOnWarning
     private final ListState configurations
     private final ListState classpaths
     private final ListState sourceSets
@@ -78,6 +83,7 @@ class JDepsReportTask extends DefaultTask {
         jdkinternals = SimpleBooleanState.of(this, 'jdeps.jdkinternals', true)
         consoleOutput = SimpleBooleanState.of(this, 'jdeps.console.output', true)
         apionly = SimpleBooleanState.of(this, 'jdeps.apionly', false)
+        failOnWarning = SimpleBooleanState.of(this, 'jdeps.fail.on.warning', false)
 
         configurations = SimpleListState.of(this, 'jdeps.configurations', [])
         classpaths = SimpleListState.of(this, 'jdeps.classpaths', ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'])
@@ -108,6 +114,9 @@ class JDepsReportTask extends DefaultTask {
 
     @Option(option = 'jdeps-apionly', description = 'Restrict analysis to APIs')
     void setApionly(boolean value) { apionly.property.set(value) }
+
+    @Option(option = 'jdeps-fail-on-warning', description = 'Fails the build if jdeps finds any warnings')
+    void setFailOnWarning(boolean value) { failOnWarning.property.set(value) }
 
     @Option(option = 'jdeps-configurations', description = 'Configurations to be analyzed')
     void setConfigurations(String value) { configurations.property.set(value.split(',').toList()) }
@@ -162,6 +171,12 @@ class JDepsReportTask extends DefaultTask {
 
     @Input
     Provider<Boolean> getResolvedApionly() { apionly.provider }
+
+    @Internal
+    Property<Boolean> getFailOnWarning() { failOnWarning.property }
+
+    @Input
+    Provider<Boolean> getResolvedFailOnWarning() { failOnWarning.provider }
 
     @Internal
     ListProperty<String> getConfigurations() { configurations.property }
@@ -260,6 +275,13 @@ class JDepsReportTask extends DefaultTask {
                 if (output) {
                     commandOutput << "\nProject: ${project.name}\n${output}".toString()
                 }
+
+                List<String> warnings = getWarnings(output)
+                if (warnings && failOnWarning.getOrElse(false)) {
+                    throw new IllegalStateException("jdeps reported errors/warnings: " +
+                        System.lineSeparator() +
+                        warnings.join(System.lineSeparator()))
+                }
             }
         }
 
@@ -325,6 +347,13 @@ class JDepsReportTask extends DefaultTask {
             if (output) {
                 commandOutput << "\nDependency: ${file.name}\n${output}".toString()
             }
+
+            List<String> warnings = getWarnings(output)
+            if (warnings && failOnWarning.getOrElse(false)) {
+                throw new IllegalStateException("jdeps reported errors/warnings: " +
+                    System.lineSeparator() +
+                    warnings.join(System.lineSeparator()))
+            }
         }
     }
 
@@ -349,5 +378,15 @@ class JDepsReportTask extends DefaultTask {
             }
         }
         null
+    }
+
+    private static List<String> getWarnings(String output) {
+        List<String> warnings = []
+        output.eachLine { String line ->
+            if (WARNING.matcher(line).matches()) {
+                warnings.add(line)
+            }
+        }
+        warnings
     }
 }

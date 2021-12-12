@@ -51,21 +51,22 @@ The following properties can be specified in the `jdeps` task configuration
 
 [options="header"]
 |===
-| Name             | Option               | Property                 | Type                | Default Value
-| verbose          | jdeps-verbose        | jdeps.verbose            | boolean             | false
-| summary          | jdeps-summary        | jdeps.summary            | boolean             | false
-| profile          | jdeps-profile        | jdeps.profile            | boolean             | false
-| recursive        | jdeps-recursive      | jdeps.recursive          | boolean             | false
-| jdkinternals     | jdeps-jdkinternals   | jdeps.jdkinternals       | boolean             | true
-| apionly          | jdeps-apionly        | jdeps.apionly            | boolean             | false
-| consoleOutput    | jdeps-console-output | jdeps.console.output     | boolean             | true
-| reportsDir       |                      |                          | File                | "${buildDir}/reports/jdeps"
-| configurations   | jdeps-configurations | jdeps.configurations     | List<String>        | ['runtime'] (Gradle 6) +
+| Name             | Option                | Property                 | Type                | Default Value
+| verbose          | jdeps-verbose         | jdeps.verbose            | boolean             | false
+| summary          | jdeps-summary         | jdeps.summary            | boolean             | false
+| profile          | jdeps-profile         | jdeps.profile            | boolean             | false
+| recursive        | jdeps-recursive       | jdeps.recursive          | boolean             | false
+| jdkinternals     | jdeps-jdkinternals    | jdeps.jdkinternals       | boolean             | true
+| apionly          | jdeps-apionly         | jdeps.apionly            | boolean             | false
+| failOnWarning    | jdeps-fail-on-warning | jdeps.fail.on.warning    | boolean             | false
+| consoleOutput    | jdeps-console-output  | jdeps.console.output     | boolean             | true
+| reportsDir       |                       |                          | File                | "${buildDir}/reports/jdeps"
+| configurations   | jdeps-configurations  | jdeps.configurations     | List<String>        | ['runtime'] (Gradle 6) +
   ['runtimeClasspath'] (Gradle 7+)
-| classpaths       | jdeps-classpaths     | jdeps.classpaths         | List<String>        | ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
-| sourceSets       | jdeps-sourcesets     | jdeps.sourcesets         | List<String>        | ['main']
-| multiRelease     | jdeps-multi-release  | jdeps.multi.release      | Integer             |
-| multiReleaseJars |                      | jdeps.multi.release.jars | Map<String, String> | [:]
+| classpaths       | jdeps-classpaths      | jdeps.classpaths         | List<String>        | ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
+| sourceSets       | jdeps-sourcesets      | jdeps.sourcesets         | List<String>        | ['main']
+| multiRelease     | jdeps-multi-release   | jdeps.multi.release      | Integer             |
+| multiReleaseJars |                       | jdeps.multi.release.jars | Map<String, String> | [:]
 |===
 
 Task properties may be defined on the command line using their option name, or their property name, such as
