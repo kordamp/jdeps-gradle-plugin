@@ -60,6 +60,7 @@ import java.util.regex.Pattern
 @CompileStatic
 class JDepsReportTask extends DefaultTask {
     private static final Pattern WARNING = Pattern.compile("^(?:Warning:.*)|(?:.+->\\s([a-zA-Z\\.]+)\\s+JDK internal API.*)")
+    private static final Pattern ERROR = Pattern.compile("^(?:Error:.*)|Exception in thread.*")
 
     private final BooleanState verbose
     private final BooleanState summary
@@ -430,19 +431,17 @@ class JDepsReportTask extends DefaultTask {
 
                 List<String> warnings = getWarnings(output)
                 if (warnings && getResolvedFailOnWarning().get()) {
-                    throw new IllegalStateException("jdeps reported errors/warnings: " +
+                    throw new IllegalStateException("jdeps reported warnings: " +
                         System.lineSeparator() +
                         warnings.join(System.lineSeparator()))
                 }
-            }
-        }
 
-        List<String> confs = new ArrayList<>(resolvedConfigurations.get())
-        if (!confs) {
-            if (PluginUtils.isGradle7Compatible()) {
-                confs.add('runtimeClasspath')
-            } else {
-                confs.add('runtime')
+                List<String> errors = getErrors(output)
+                if (errors) {
+                    throw new IllegalStateException("jdeps reported errors: " +
+                        System.lineSeparator() +
+                        errors.join(System.lineSeparator()))
+                }
             }
         }
 
@@ -540,5 +539,15 @@ class JDepsReportTask extends DefaultTask {
             }
         }
         warnings
+    }
+
+    private static List<String> getErrors(String output) {
+        List<String> errors = []
+        output.eachLine { String line ->
+            if (ERROR.matcher(line).matches()) {
+                errors.add(line)
+            }
+        }
+        errors
     }
 }
