@@ -51,39 +51,39 @@ The following properties can be specified in the `jdeps` task configuration
 
 [options="header"]
 |===
-| Name              | Option                    | Property                  | Type                | Default Value
-| listDeps          | list-deps                 | jdeps.list.deps           | boolean             | false
-| listReducedDeps   | list-reduced-deps         | jdeps.list.reduced.deps   | boolean             | false
-| printModuleDeps   | print-module-deps         | jdeps.print.module.deps   | boolean             | false
-| verbose           | jdeps-verbose             | jdeps.verbose             | boolean             | false
-| summary           | jdeps-summary             | jdeps.summary             | boolean             | false
-| profile           | jdeps-profile             | jdeps.profile             | boolean             | false
-| recursive         | jdeps-recursive           | jdeps.recursive           | boolean             | false
-| jdkinternals      | jdeps-jdkinternals        | jdeps.jdkinternals        | boolean             | false
-| apionly           | jdeps-apionly             | jdeps.apionly             | boolean             | false
-| failOnWarning     | jdeps-fail-on-warning     | jdeps.fail.on.warning     | boolean             | false
-| ignoreMissingDeps | jdeps-ignore-missing-deps | jdeps.ignore.missing.deps | boolean             | false
-| missingDeps       | jdeps-missing-deps        | jdeps.missing.deps        | boolean             | false
-| include           | jdeps-include             | jdeps.include             | String              |
-| regex             | jdeps-regex               | jdeps.regex               | String              |
-| filter            | jdeps-filter              | jdeps.filter              | String              |
-| requires          | jdeps-require             | jdeps.require             | List<String>        | []
-| packages          | jdeps-package             | jdeps.package             | List<String>        | []
-| consoleOutput     | jdeps-console-output      | jdeps.console.output      | boolean             | true
-| reportsDir        |                           |                           | File                | "${buildDir}/reports/jdeps"
-| configurations    | jdeps-configurations      | jdeps.configurations      | List<String>        | []
-| classpaths        | jdeps-classpaths          | jdeps.classpaths          | List<String>        | []
-| sourceSets        | jdeps-sourcesets          | jdeps.sourcesets          | List<String>        | ['main']
-| multiRelease      | jdeps-multi-release       | jdeps.multi.release       | String              |
-| multiReleaseJars  |                           | jdeps.multi.release.jars  | Map<String, String> | [:]
-| dotOutput         | jdeps-dot-output          | jdeps.dot.output          | File                |
+| Name              | Option              | Property                  | Type                | Default Value
+| listDeps          | list-deps           | jdeps.list.deps           | boolean             | false
+| listReducedDeps   | list-reduced-deps   | jdeps.list.reduced.deps   | boolean             | false
+| printModuleDeps   | print-module-deps   | jdeps.print.module.deps   | boolean             | false
+| verbose           | verbose             | jdeps.verbose             | boolean             | false
+| summary           | summary             | jdeps.summary             | boolean             | false
+| profile           | profile             | jdeps.profile             | boolean             | false
+| recursive         | recursive           | jdeps.recursive           | boolean             | false
+| jdkinternals      | jdkinternals        | jdeps.jdkinternals        | boolean             | false
+| apionly           | apionly             | jdeps.apionly             | boolean             | false
+| failOnWarning     | fail-on-warning     | jdeps.fail.on.warning     | boolean             | false
+| ignoreMissingDeps | ignore-missing-deps | jdeps.ignore.missing.deps | boolean             | false
+| missingDeps       | missing-deps        | jdeps.missing.deps        | boolean             | false
+| include           | include             | jdeps.include             | String              |
+| regex             | regex               | jdeps.regex               | String              |
+| filter            | filter              | jdeps.filter              | String              |
+| requires          | require             | jdeps.require             | List<String>        | []
+| packages          | package             | jdeps.package             | List<String>        | []
+| consoleOutput     | console-output      | jdeps.console.output      | boolean             | true
+| reportsDir        |                     |                           | File                | "${buildDir}/reports/jdeps"
+| configurations    | configurations      | jdeps.configurations      | List<String>        | []
+| classpaths        | classpaths          | jdeps.classpaths          | List<String>        | []
+| sourceSets        | sourcesets          | jdeps.sourcesets          | List<String>        | ['main']
+| multiRelease      | multi-release       | jdeps.multi.release       | String              |
+| multiReleaseJars  |                     | jdeps.multi.release.jars  | Map<String, String> | [:]
+| dotOutput         | dot-output          | jdeps.dot.output          | File                |
 |===
 
 Task properties may be defined on the command line using their option name, or their property name, such as
 
 [source]
 ----
-$ gradle jdeps --jdeps-verbose
+$ gradle jdeps --verbose
 $ gradle jdeps -Pjdeps.verbose=true
 $ gradle jdeps -Djdeps.verbose=true
 $ set JDEPS_VERBOSE=true

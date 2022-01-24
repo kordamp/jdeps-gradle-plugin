@@ -129,64 +129,64 @@ class JDepsReportTask extends DefaultTask {
     @Option(option = 'print-module-deps', description = 'Comma-separated list of module dependences')
     void setPrintModuleDeps(boolean value) { printModuleDeps.property.set(value) }
 
-    @Option(option = 'jdeps-verbose', description = 'Print all class level dependences')
+    @Option(option = 'verbose', description = 'Print all class level dependences')
     void setVerbose(boolean value) { verbose.property.set(value) }
 
-    @Option(option = 'jdeps-summary', description = 'Print dependency summary only')
+    @Option(option = 'summary', description = 'Print dependency summary only')
     void setSummary(boolean value) { summary.property.set(value) }
 
-    @Option(option = 'jdeps-profile', description = 'Show profile containing a package')
+    @Option(option = 'profile', description = 'Show profile containing a package')
     void setProfile(boolean value) { profile.property.set(value) }
 
-    @Option(option = 'jdeps-recursive', description = 'Recursively traverse all run-time dependences')
+    @Option(option = 'recursive', description = 'Recursively traverse all run-time dependences')
     void setRecursive(boolean value) { recursive.property.set(value) }
 
-    @Option(option = 'jdeps-jdkinternals', description = 'Finds class-level dependences on JDK internal APIs')
+    @Option(option = 'jdkinternals', description = 'Finds class-level dependences on JDK internal APIs')
     void setJdkinternals(boolean value) { jdkinternals.property.set(value) }
 
-    @Option(option = 'jdeps-console-output', description = 'Print out report to console')
+    @Option(option = 'console-output', description = 'Print out report to console')
     void setConsoleOutput(boolean value) { consoleOutput.property.set(value) }
 
-    @Option(option = 'jdeps-apionly', description = 'Restrict analysis to APIs')
+    @Option(option = 'apionly', description = 'Restrict analysis to APIs')
     void setApionly(boolean value) { apionly.property.set(value) }
 
-    @Option(option = 'jdeps-fail-on-warning', description = 'Fails the build if jdeps finds any warnings')
+    @Option(option = 'fail-on-warning', description = 'Fails the build if jdeps finds any warnings')
     void setFailOnWarning(boolean value) { failOnWarning.property.set(value) }
 
-    @Option(option = 'jdeps-missing-deps', description = 'Finds missing dependences')
+    @Option(option = 'missing-deps', description = 'Finds missing dependences')
     void setMissingDeps(boolean value) { missingDeps.property.set(value) }
 
-    @Option(option = 'jdeps-ignore-missing-deps', description = 'Ignore missing dependences')
+    @Option(option = 'ignore-missing-deps', description = 'Ignore missing dependences')
     void setIgnoreMissingDeps(boolean value) { ignoreMissingDeps.property.set(value) }
 
-    @Option(option = 'jdeps-include', description = 'Restrict analysis to classes matching pattern')
+    @Option(option = 'include', description = 'Restrict analysis to classes matching pattern')
     void setInclude(String value) { include.property.set(value) }
 
-    @Option(option = 'jdeps-regex', description = 'Finds dependences matching the given pattern')
+    @Option(option = 'regex', description = 'Finds dependences matching the given pattern')
     void setRegex(String value) { regex.property.set(value) }
 
-    @Option(option = 'jdeps-filter', description = 'Filter dependences matching the given pattern')
+    @Option(option = 'filter', description = 'Filter dependences matching the given pattern')
     void setFilter(String value) { filter.property.set(value) }
 
-    @Option(option = 'jdeps-package', description = 'Finds dependences matching the given package name. REPEATABLE')
+    @Option(option = 'package', description = 'Finds dependences matching the given package name. REPEATABLE')
     void setPackage(String value) { pkgs.property.add(value) }
 
-    @Option(option = 'jdeps-require', description = 'Finds dependences matching the given module name. REPEATABLE')
+    @Option(option = 'require', description = 'Finds dependences matching the given module name. REPEATABLE')
     void setRequire(String value) { requires.property.add(value) }
 
-    @Option(option = 'jdeps-configurations', description = 'Configurations to be analyzed')
+    @Option(option = 'configurations', description = 'Configurations to be analyzed')
     void setConfigurations(String value) { configurations.property.set(value.split(',').toList()) }
 
-    @Option(option = 'jdeps-classpaths', description = 'Classpaths to be analyzed')
+    @Option(option = 'classpaths', description = 'Classpaths to be analyzed')
     void setClasspaths(String value) { classpaths.property.set(value.split(',').toList()) }
 
-    @Option(option = 'jdeps-sourcesets', description = 'SourceSets to be analyzed')
+    @Option(option = 'sourcesets', description = 'SourceSets to be analyzed')
     void setSourceSets(String value) { sourceSets.property.set(value.split(',').toList()) }
 
-    @Option(option = 'jdeps-multi-release', description = 'Set the multi-release level')
+    @Option(option = 'multi-release', description = 'Set the multi-release level')
     void setMultiRelease(String value) { multiRelease.property.set(value) }
 
-    @Option(option = 'jdeps-dot-output', description = 'Destination directory for DOT file output')
+    @Option(option = 'dot-output', description = 'Destination directory for DOT file output')
     void setDotOutput(String value) { dotOutput.property.set(project.file(value)) }
 
     @Internal
