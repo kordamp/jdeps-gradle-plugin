@@ -131,3 +131,15 @@ jdepsReport {
     }
 }
 ----
+
+=== JDeps Subcommands
+
+You may use any of these subcommands with jdeps:
+
+ - `--list-deps`
+ - `--list-reduced-deps`
+ - `--print-module-deps`
+
+The output of these commands will be written to a file matching `<subcommand>-<[sourceset|configuration].name>.txt`,
+for example invoking `--print-module-deps` with default configuration will run jdeps on the `main` sourceSet, resulting
+in a file named `build/reports/jdeps/print-module-deps-main.txt`.
