@@ -52,6 +52,9 @@ The following properties can be specified in the `jdeps` task configuration
 [options="header"]
 |===
 | Name              | Option                    | Property                  | Type                | Default Value
+| listDeps          | list-deps                 | jdeps.list.deps           | boolean             | false
+| listReducedDeps   | list-reduced-deps         | jdeps.list.reduced.deps   | boolean             | false
+| printModuleDeps   | print-module-deps         | jdeps.print.module.deps   | boolean             | false
 | verbose           | jdeps-verbose             | jdeps.verbose             | boolean             | false
 | summary           | jdeps-summary             | jdeps.summary             | boolean             | false
 | profile           | jdeps-profile             | jdeps.profile             | boolean             | false

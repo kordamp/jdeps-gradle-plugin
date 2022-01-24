@@ -61,6 +61,9 @@ class JDepsReportTask extends DefaultTask {
     private static final Pattern WARNING = Pattern.compile("^(?:Warning:.*)|(?:.+->\\s([a-zA-Z\\.]+)\\s+JDK internal API.*)")
     private static final Pattern ERROR = Pattern.compile("^(?:Error:.*)|Exception in thread.*")
 
+    private final BooleanState listDeps
+    private final BooleanState listReducedDeps
+    private final BooleanState printModuleDeps
     private final BooleanState verbose
     private final BooleanState summary
     private final BooleanState profile
@@ -88,6 +91,9 @@ class JDepsReportTask extends DefaultTask {
     JDepsReportTask() {
         extensions.create('moduleOptions', ModuleOptions)
 
+        listDeps = SimpleBooleanState.of(this, 'jdeps.list.deps', false)
+        listReducedDeps = SimpleBooleanState.of(this, 'jdeps.list.reduced.deps', false)
+        printModuleDeps = SimpleBooleanState.of(this, 'jdeps.print.module.deps', false)
         verbose = SimpleBooleanState.of(this, 'jdeps.verbose', false)
         summary = SimpleBooleanState.of(this, 'jdeps.summary', false)
         profile = SimpleBooleanState.of(this, 'jdeps.profile', false)
@@ -113,6 +119,15 @@ class JDepsReportTask extends DefaultTask {
         multiReleaseJars = SimpleMapState.of(this, 'jdeps.multi.release.jars', [:])
         dotOutput = SimpleRegularFileState.of(this, 'jdeps.dot.output', (RegularFile) null)
     }
+
+    @Option(option = 'list-deps', description = 'Lists the module dependences')
+    void setListDeps(boolean value) { listDeps.property.set(value) }
+
+    @Option(option = 'list-reduced-deps', description = 'Lists the module dependences')
+    void setListReducedDeps(boolean value) { listReducedDeps.property.set(value) }
+
+    @Option(option = 'print-module-deps', description = 'Comma-separated list of module dependences')
+    void setPrintModuleDeps(boolean value) { printModuleDeps.property.set(value) }
 
     @Option(option = 'jdeps-verbose', description = 'Print all class level dependences')
     void setVerbose(boolean value) { verbose.property.set(value) }
@@ -173,6 +188,24 @@ class JDepsReportTask extends DefaultTask {
 
     @Option(option = 'jdeps-dot-output', description = 'Destination directory for DOT file output')
     void setDotOutput(String value) { dotOutput.property.set(project.file(value)) }
+
+    @Internal
+    Property<Boolean> getListDeps() { listDeps.property }
+
+    @Input
+    Provider<Boolean> getResolvedListDeps() { listDeps.provider }
+
+    @Internal
+    Property<Boolean> getListReducedDeps() { listReducedDeps.property }
+
+    @Input
+    Provider<Boolean> getResolvedListReducedDeps() { listReducedDeps.provider }
+
+    @Internal
+    Property<Boolean> getPrintModuleDeps() { printModuleDeps.property }
+
+    @Input
+    Provider<Boolean> getResolvedPrintModuleDeps() { printModuleDeps.provider }
 
     @Internal
     Property<Boolean> getVerbose() { verbose.property }
@@ -318,6 +351,14 @@ class JDepsReportTask extends DefaultTask {
         List<String> compilerArgs = compileJava.get().options.compilerArgs
         List<String> commandOutput = []
 
+        int explicitCommand = 0
+        if (resolvedListDeps.get()) explicitCommand++
+        if (resolvedListReducedDeps.get()) explicitCommand++
+        if (resolvedPrintModuleDeps.get()) explicitCommand++
+        if (explicitCommand > 1) {
+            throw new IllegalArgumentException("--list-deps, --list-reduced-deps, --print-module-deps are mutually exclusive")
+        }
+
         final List<String> baseCmd = ['jdeps']
         if (resolvedSummary.get()) {
             if (resolvedMissingDeps.get()) {
@@ -398,7 +439,7 @@ class JDepsReportTask extends DefaultTask {
                 baseCmd << regex
             }
 
-            if (resolvedFilter.present) {
+            if (resolvedFilter.get()) {
                 String filter = resolvedFilter.get()
                 if (filter in [':package', ':archive', ':module', ':none']) {
                     baseCmd << '-filter' + filter
@@ -413,6 +454,7 @@ class JDepsReportTask extends DefaultTask {
 
         project.logger.info("jdeps version is ${executeCommand(['jdeps', '-version'])}")
 
+        Map<String, String> outputs = [:]
         JavaPluginConvention convention = project.convention.getPlugin(JavaPluginConvention)
         resolvedSourceSets.get().each { sc ->
             SourceSet sourceSet = convention.sourceSets.findByName(sc)
@@ -422,10 +464,12 @@ class JDepsReportTask extends DefaultTask {
                     return // skip
                 }
 
-                project.logger.info("jdeps command set to ${baseCmd.join(' ')}")
-                String output = JDepsReportTask.executeCommandOn(baseCmd, file.absolutePath)
+                List<String> cmd = applyExplicitCommand(baseCmd)
+                project.logger.info("jdeps command set to ${cmd.join(' ')}")
+                String output = JDepsReportTask.executeCommandOn(cmd, file.absolutePath)
                 if (output) {
                     commandOutput << "\nProject: ${project.name}\n${output}".toString()
+                    outputs[sourceSet.name] = output
                 }
 
                 List<String> warnings = getWarnings(output)
@@ -460,6 +504,19 @@ class JDepsReportTask extends DefaultTask {
             if (!parentFile.exists()) parentFile.mkdirs()
             File logFile = new File(parentFile, 'jdeps-report.txt')
             logFile.append(commandOutput)
+
+            String prefix = 'jdeps-'
+            if (resolvedListDeps.get()) {
+                prefix = 'list-deps-'
+            } else if (resolvedListReducedDeps.get()) {
+                prefix = 'list-reduced-deps-'
+            } else if (resolvedPrintModuleDeps.get()) {
+                prefix = 'print-module-deps-'
+            }
+            outputs.each { k, v ->
+                logFile = new File(parentFile, prefix + k + '.txt')
+                logFile.append(v)
+            }
         }
     }
 
@@ -476,7 +533,7 @@ class JDepsReportTask extends DefaultTask {
         this.reportDir = f
     }
 
-    private void inspectConfiguration(Configuration configuration, List<String> baseCmd, List<String> commandOutput) {
+    private void inspectConfiguration(Configuration configuration, List<String> baseCmd, List<String> commandOutput, Map<String, String> outputs) {
         project.logger.info("Running jdeps on configuration ${configuration.name}")
         configuration.resolve().each { File file ->
             if (!file.exists()) {
@@ -492,10 +549,12 @@ class JDepsReportTask extends DefaultTask {
                 }
             }
 
+            command = applyExplicitCommand(command)
             project.logger.info("jdeps command set to: ${command.join(' ')} ${file.absolutePath}")
             String output = JDepsReportTask.executeCommandOn(command, file.absolutePath)
             if (output) {
                 commandOutput << "\nDependency: ${file.name}\n${output}".toString()
+                outputs[configuration.name] = output
             }
 
             List<String> warnings = getWarnings(output)
@@ -505,6 +564,28 @@ class JDepsReportTask extends DefaultTask {
                     warnings.join(System.lineSeparator()))
             }
         }
+    }
+
+    private List<String> applyExplicitCommand(List<String> cmd) {
+        List<String> c = new ArrayList<>(cmd)
+        String subcommand = ''
+        if (resolvedListDeps.get()) {
+            subcommand = '--list-deps'
+        } else if (resolvedListReducedDeps.get()) {
+            subcommand = '--list-reduced-deps'
+        } else if (resolvedPrintModuleDeps.get()) {
+            subcommand = '--print-module-deps'
+        }
+
+        if (subcommand) {
+            if (c.contains('--class-path')) {
+                c.add(c.indexOf('--class-path'), subcommand)
+            } else if (c.contains('--module-path')) {
+                c.add(c.indexOf('--module-path'), subcommand)
+            }
+        }
+
+        c
     }
 
     private static String executeCommandOn(List<String> baseCmd, String path) {
