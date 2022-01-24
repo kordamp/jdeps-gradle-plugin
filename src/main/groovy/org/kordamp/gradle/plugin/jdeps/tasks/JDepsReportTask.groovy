@@ -48,7 +48,6 @@ import org.kordamp.gradle.property.SimpleMapState
 import org.kordamp.gradle.property.SimpleRegularFileState
 import org.kordamp.gradle.property.SimpleStringState
 import org.kordamp.gradle.property.StringState
-import org.kordamp.gradle.util.PluginUtils
 import org.zeroturnaround.exec.ProcessExecutor
 
 import java.util.regex.Pattern
@@ -106,7 +105,7 @@ class JDepsReportTask extends DefaultTask {
         requires = SimpleListState.of(this, 'jdeps.require', [])
 
         configurations = SimpleListState.of(this, 'jdeps.configurations', [])
-        classpaths = SimpleListState.of(this, 'jdeps.classpaths', ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'])
+        classpaths = SimpleListState.of(this, 'jdeps.classpaths', [])
         sourceSets = SimpleListState.of(this, 'jdeps.sourcesets', ['main'])
 
         multiRelease = SimpleStringState.of(this, 'jdeps.multi.release', 'base')
@@ -343,7 +342,7 @@ class JDepsReportTask extends DefaultTask {
             }
 
             if (classpath) {
-                baseCmd << '--module-path'
+                baseCmd << '--class-path'
                 baseCmd << classpath
             } else {
                 int modulePathIndex = compilerArgs.indexOf('--module-path')
@@ -445,12 +444,12 @@ class JDepsReportTask extends DefaultTask {
             }
         }
 
-        for (String c : confs) {
-            inspectConfiguration(project.configurations[c.trim()], baseCmd, commandOutput)
+        for (String c : resolvedConfigurations.get()) {
+            inspectConfiguration(project.configurations[c.trim()], baseCmd, commandOutput, outputs)
         }
 
         for (String c : resolvedClasspaths.get()) {
-            inspectConfiguration(project.configurations[c.trim()], baseCmd, commandOutput)
+            inspectConfiguration(project.configurations[c.trim()], baseCmd, commandOutput, outputs)
         }
 
         if (commandOutput) {
