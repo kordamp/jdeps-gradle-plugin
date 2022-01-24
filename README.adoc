@@ -56,7 +56,7 @@ The following properties can be specified in the `jdeps` task configuration
 | summary           | jdeps-summary             | jdeps.summary             | boolean             | false
 | profile           | jdeps-profile             | jdeps.profile             | boolean             | false
 | recursive         | jdeps-recursive           | jdeps.recursive           | boolean             | false
-| jdkinternals      | jdeps-jdkinternals        | jdeps.jdkinternals        | boolean             | true
+| jdkinternals      | jdeps-jdkinternals        | jdeps.jdkinternals        | boolean             | false
 | apionly           | jdeps-apionly             | jdeps.apionly             | boolean             | false
 | failOnWarning     | jdeps-fail-on-warning     | jdeps.fail.on.warning     | boolean             | false
 | ignoreMissingDeps | jdeps-ignore-missing-deps | jdeps.ignore.missing.deps | boolean             | false

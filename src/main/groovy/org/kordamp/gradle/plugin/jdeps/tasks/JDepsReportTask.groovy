@@ -93,7 +93,7 @@ class JDepsReportTask extends DefaultTask {
         summary = SimpleBooleanState.of(this, 'jdeps.summary', false)
         profile = SimpleBooleanState.of(this, 'jdeps.profile', false)
         recursive = SimpleBooleanState.of(this, 'jdeps.recursive', false)
-        jdkinternals = SimpleBooleanState.of(this, 'jdeps.jdkinternals', true)
+        jdkinternals = SimpleBooleanState.of(this, 'jdeps.jdkinternals', false)
         consoleOutput = SimpleBooleanState.of(this, 'jdeps.console.output', true)
         apionly = SimpleBooleanState.of(this, 'jdeps.apionly', false)
         failOnWarning = SimpleBooleanState.of(this, 'jdeps.fail.on.warning', false)
