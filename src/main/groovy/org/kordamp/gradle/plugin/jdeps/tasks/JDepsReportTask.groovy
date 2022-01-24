@@ -48,6 +48,8 @@ import org.kordamp.gradle.property.SimpleIntegerState
 import org.kordamp.gradle.property.SimpleListState
 import org.kordamp.gradle.property.SimpleMapState
 import org.kordamp.gradle.property.SimpleRegularFileState
+import org.kordamp.gradle.property.SimpleStringState
+import org.kordamp.gradle.property.StringState
 import org.kordamp.gradle.util.PluginUtils
 import org.zeroturnaround.exec.ProcessExecutor
 
@@ -69,6 +71,13 @@ class JDepsReportTask extends DefaultTask {
     private final BooleanState consoleOutput
     private final BooleanState apionly
     private final BooleanState failOnWarning
+    private final BooleanState missingDeps
+    private final BooleanState ignoreMissingDeps
+    private final ListState pkgs
+    private final ListState requires
+    private final StringState include
+    private final StringState regex
+    private final StringState filter
     private final ListState configurations
     private final ListState classpaths
     private final ListState sourceSets
@@ -89,6 +98,13 @@ class JDepsReportTask extends DefaultTask {
         consoleOutput = SimpleBooleanState.of(this, 'jdeps.console.output', true)
         apionly = SimpleBooleanState.of(this, 'jdeps.apionly', false)
         failOnWarning = SimpleBooleanState.of(this, 'jdeps.fail.on.warning', false)
+        missingDeps = SimpleBooleanState.of(this, 'jdeps.missing.deps', false)
+        ignoreMissingDeps = SimpleBooleanState.of(this, 'jdeps.ignore.missing.deps', false)
+        include = SimpleStringState.of(this, 'jdeps.include', "")
+        regex = SimpleStringState.of(this, 'jdeps.regex', "")
+        filter = SimpleStringState.of(this, 'jdeps.filter', "")
+        pkgs = SimpleListState.of(this, 'jdeps.package', [])
+        requires = SimpleListState.of(this, 'jdeps.require', [])
 
         configurations = SimpleListState.of(this, 'jdeps.configurations', [])
         classpaths = SimpleListState.of(this, 'jdeps.classpaths', ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'])
@@ -123,6 +139,27 @@ class JDepsReportTask extends DefaultTask {
 
     @Option(option = 'jdeps-fail-on-warning', description = 'Fails the build if jdeps finds any warnings')
     void setFailOnWarning(boolean value) { failOnWarning.property.set(value) }
+
+    @Option(option = 'jdeps-missing-deps', description = 'Finds missing dependences')
+    void setMissingDeps(boolean value) { missingDeps.property.set(value) }
+
+    @Option(option = 'jdeps-ignore-missing-deps', description = 'Ignore missing dependences')
+    void setIgnoreMissingDeps(boolean value) { ignoreMissingDeps.property.set(value) }
+
+    @Option(option = 'jdeps-include', description = 'Restrict analysis to classes matching pattern')
+    void setInclude(String value) { include.property.set(value) }
+
+    @Option(option = 'jdeps-regex', description = 'Finds dependences matching the given pattern')
+    void setRegex(String value) { regex.property.set(value) }
+
+    @Option(option = 'jdeps-filter', description = 'Filter dependences matching the given pattern')
+    void setFilter(String value) { filter.property.set(value) }
+
+    @Option(option = 'jdeps-package', description = 'Finds dependences matching the given package name. REPEATABLE')
+    void setPackage(String value) { pkgs.property.add(value) }
+
+    @Option(option = 'jdeps-require', description = 'Finds dependences matching the given module name. REPEATABLE')
+    void setRequire(String value) { requires.property.add(value) }
 
     @Option(option = 'jdeps-configurations', description = 'Configurations to be analyzed')
     void setConfigurations(String value) { configurations.property.set(value.split(',').toList()) }
@@ -188,6 +225,53 @@ class JDepsReportTask extends DefaultTask {
     Provider<Boolean> getResolvedFailOnWarning() { failOnWarning.provider }
 
     @Internal
+    Property<Boolean> getMissingDeps() { missingDeps.property }
+
+    @Input
+    Provider<Boolean> getResolvedMissingDeps() { missingDeps.provider }
+
+    @Internal
+    Property<Boolean> getIgnoreMissingDeps() { ignoreMissingDeps.property }
+
+    @Input
+    Provider<Boolean> getResolvedIgnoreMissingDeps() { ignoreMissingDeps.provider }
+
+    @Internal
+    Property<String> getInclude() { include.property }
+
+    @Input
+    @Optional
+    Provider<String> getResolvedInclude() { include.provider }
+
+    @Internal
+    Property<String> getRegex() { regex.property }
+
+    @Input
+    @Optional
+    Provider<String> getResolvedRegex() { regex.provider }
+
+    @Internal
+    Property<String> getFilter() { filter.property }
+
+    @Input
+    @Optional
+    Provider<String> getResolvedFilter() { filter.provider }
+
+    @Internal
+    ListProperty<String> getPackages() { pkgs.property }
+
+    @Input
+    @Optional
+    Provider<List<String>> getResolvedPackages() { pkgs.provider }
+
+    @Internal
+    ListProperty<String> getRequires() { requires.property }
+
+    @Input
+    @Optional
+    Provider<List<String>> getResolvedRequires() { requires.provider }
+
+    @Internal
     ListProperty<String> getConfigurations() { configurations.property }
 
     @Input
@@ -237,7 +321,12 @@ class JDepsReportTask extends DefaultTask {
         List<String> commandOutput = []
 
         final List<String> baseCmd = ['jdeps']
-        if (resolvedSummary.get()) baseCmd << '-s'
+        if (resolvedSummary.get()) {
+            if (resolvedMissingDeps.get()) {
+                throw new IllegalArgumentException("-s, --missing-deps are mutually exclusive")
+            }
+            baseCmd << '-s'
+        }
         if (resolvedVerbose.get()) baseCmd << '-v'
         if (resolvedProfile.get()) baseCmd << '-P'
         if (resolvedRecursive.get()) baseCmd << '-R'
@@ -273,6 +362,51 @@ class JDepsReportTask extends DefaultTask {
                 if (addModulesIndex > -1) {
                     baseCmd << '--add-modules'
                     baseCmd << compilerArgs[addModulesIndex + 1]
+                }
+            }
+
+            List<String> requires = resolvedRequires.get()
+            List<String> packages = resolvedPackages.get()
+            String regex = resolvedRegex.orNull
+            int exclusive = 0
+            if (!requires.isEmpty()) exclusive++
+            if (!packages.isEmpty()) exclusive++
+            if (regex) exclusive++
+            if (exclusive > 1) {
+                throw new IllegalArgumentException("--package, --regex, --require are mutually exclusive")
+            }
+
+            if (resolvedMissingDeps.get()) {
+                exclusive = 1
+                if (!packages.isEmpty()) exclusive++
+                if (regex) exclusive++
+                if (exclusive > 1) {
+                    throw new IllegalArgumentException("--package, --regex, --missing-deps are mutually exclusive")
+                }
+            }
+
+            requires.each { s ->
+                baseCmd << '--require'
+                baseCmd << s
+            }
+
+            packages.each { s ->
+                baseCmd << '--package'
+                baseCmd << s
+            }
+
+            if (regex) {
+                baseCmd << '--regex'
+                baseCmd << regex
+            }
+
+            if (resolvedFilter.present) {
+                String filter = resolvedFilter.get()
+                if (filter in [':package', ':archive', ':module', ':none']) {
+                    baseCmd << '-filter' + filter
+                } else {
+                    baseCmd << '-filter'
+                    baseCmd << filter
                 }
             }
         }
