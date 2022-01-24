@@ -39,12 +39,10 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.options.Option
 import org.kordamp.gradle.property.BooleanState
-import org.kordamp.gradle.property.IntegerState
 import org.kordamp.gradle.property.ListState
 import org.kordamp.gradle.property.MapState
 import org.kordamp.gradle.property.RegularFileState
 import org.kordamp.gradle.property.SimpleBooleanState
-import org.kordamp.gradle.property.SimpleIntegerState
 import org.kordamp.gradle.property.SimpleListState
 import org.kordamp.gradle.property.SimpleMapState
 import org.kordamp.gradle.property.SimpleRegularFileState
@@ -81,7 +79,7 @@ class JDepsReportTask extends DefaultTask {
     private final ListState configurations
     private final ListState classpaths
     private final ListState sourceSets
-    private final IntegerState multiRelease
+    private final StringState multiRelease
     private final MapState multiReleaseJars
     private final RegularFileState dotOutput
 
@@ -110,7 +108,7 @@ class JDepsReportTask extends DefaultTask {
         classpaths = SimpleListState.of(this, 'jdeps.classpaths', ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'])
         sourceSets = SimpleListState.of(this, 'jdeps.sourcesets', ['main'])
 
-        multiRelease = SimpleIntegerState.of(this, 'jdeps.multi.release', -1)
+        multiRelease = SimpleStringState.of(this, 'jdeps.multi.release', 'base')
 
         multiReleaseJars = SimpleMapState.of(this, 'jdeps.multi.release.jars', [:])
         dotOutput = SimpleRegularFileState.of(this, 'jdeps.dot.output', (RegularFile) null)
@@ -171,7 +169,7 @@ class JDepsReportTask extends DefaultTask {
     void setSourceSets(String value) { sourceSets.property.set(value.split(',').toList()) }
 
     @Option(option = 'jdeps-multi-release', description = 'Set the multi-release level')
-    void setMultiRelease(String value) { multiRelease.property.set(Integer.valueOf(value)) }
+    void setMultiRelease(String value) { multiRelease.property.set(value) }
 
     @Option(option = 'jdeps-dot-output', description = 'Destination directory for DOT file output')
     void setDotOutput(String value) { dotOutput.property.set(project.file(value)) }
@@ -293,10 +291,10 @@ class JDepsReportTask extends DefaultTask {
     Provider<List<String>> getResolvedSourceSets() { sourceSets.provider }
 
     @Internal
-    Property<Integer> getMultiRelease() { multiRelease.property }
+    Property<String> getMultiRelease() { multiRelease.property }
 
     @Input
-    Provider<Integer> getResolvedMultiRelease() { multiRelease.provider }
+    Provider<String> getResolvedMultiRelease() { multiRelease.provider }
 
     @Internal
     MapProperty<String, String> getMultiReleaseJars() { multiReleaseJars.property }
@@ -338,9 +336,9 @@ class JDepsReportTask extends DefaultTask {
         }
 
         if (JavaVersion.current().java9Compatible) {
-            if (resolvedMultiRelease.get() > -1) {
+            if (resolvedMultiRelease.present) {
                 baseCmd << '--multi-release'
-                baseCmd << resolvedMultiRelease.get().toString()
+                baseCmd << resolvedMultiRelease.get()
             }
 
             if (classpath) {

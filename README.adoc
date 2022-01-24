@@ -72,7 +72,7 @@ The following properties can be specified in the `jdeps` task configuration
   ['runtimeClasspath'] (Gradle 7+)
 | classpaths        | jdeps-classpaths          | jdeps.classpaths          | List<String>        | ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
 | sourceSets        | jdeps-sourcesets          | jdeps.sourcesets          | List<String>        | ['main']
-| multiRelease      | jdeps-multi-release       | jdeps.multi.release       | Integer             |
+| multiRelease      | jdeps-multi-release       | jdeps.multi.release       | String              |
 | multiReleaseJars  |                           | jdeps.multi.release.jars  | Map<String, String> | [:]
 | dotOutput         | jdeps-dot-output          | jdeps.dot.output          | File                |
 |===
