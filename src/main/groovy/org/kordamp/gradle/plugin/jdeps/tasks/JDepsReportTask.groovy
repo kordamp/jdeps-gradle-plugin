@@ -503,7 +503,7 @@ class JDepsReportTask extends DefaultTask {
             File parentFile = getReportsDir()
             if (!parentFile.exists()) parentFile.mkdirs()
             File logFile = new File(parentFile, 'jdeps-report.txt')
-            logFile.append(commandOutput)
+            logFile.append(commandOutput.join('\n'))
 
             String prefix = 'jdeps-'
             if (resolvedListDeps.get()) {
@@ -582,6 +582,8 @@ class JDepsReportTask extends DefaultTask {
                 c.add(c.indexOf('--class-path'), subcommand)
             } else if (c.contains('--module-path')) {
                 c.add(c.indexOf('--module-path'), subcommand)
+            } else {
+                c << subcommand
             }
         }
 
