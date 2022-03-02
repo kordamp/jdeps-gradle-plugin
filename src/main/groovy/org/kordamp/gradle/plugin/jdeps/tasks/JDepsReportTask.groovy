@@ -66,6 +66,7 @@ class JDepsReportTask extends DefaultTask {
     private final BooleanState listReducedDeps
     private final BooleanState printModuleDeps
     private final BooleanState verbose
+    private final BooleanState modular
     private final BooleanState summary
     private final BooleanState profile
     private final BooleanState recursive
@@ -96,6 +97,7 @@ class JDepsReportTask extends DefaultTask {
         listReducedDeps = SimpleBooleanState.of(this, 'jdeps.list.reduced.deps', false)
         printModuleDeps = SimpleBooleanState.of(this, 'jdeps.print.module.deps', false)
         verbose = SimpleBooleanState.of(this, 'jdeps.verbose', false)
+        modular = SimpleBooleanState.of(this, 'jdeps.modular', false)
         summary = SimpleBooleanState.of(this, 'jdeps.summary', false)
         profile = SimpleBooleanState.of(this, 'jdeps.profile', false)
         recursive = SimpleBooleanState.of(this, 'jdeps.recursive', false)
@@ -132,6 +134,9 @@ class JDepsReportTask extends DefaultTask {
 
     @Option(option = 'verbose', description = 'Print all class level dependences')
     void setVerbose(boolean value) { verbose.property.set(value) }
+
+    @Option(option = 'modular', description = 'Uses the module path instead of the classpath')
+    void setModular(boolean value) { modular.property.set(value) }
 
     @Option(option = 'summary', description = 'Print dependency summary only')
     void setSummary(boolean value) { summary.property.set(value) }
@@ -213,6 +218,12 @@ class JDepsReportTask extends DefaultTask {
 
     @Input
     Provider<Boolean> getResolvedVerbose() { verbose.provider }
+
+    @Internal
+    Property<Boolean> getModular() { modular.property }
+
+    @Input
+    Provider<Boolean> getResolvedModular() { modular.provider }
 
     @Internal
     Property<Boolean> getSummary() { summary.property }
@@ -383,7 +394,16 @@ class JDepsReportTask extends DefaultTask {
                 baseCmd << resolvedMultiRelease.get()
             }
 
-            if (classpath) {
+            if (resolvedModular.get()) {
+                int modulePathIndex = compilerArgs.indexOf('--module-path')
+                if (modulePathIndex > -1) {
+                    baseCmd << '--module-path'
+                    baseCmd << compilerArgs[modulePathIndex + 1]
+                } else {
+                    baseCmd << '--module-path'
+                    baseCmd << classpath
+                }
+            } else if (classpath) {
                 baseCmd << '--class-path'
                 baseCmd << classpath
             } else {

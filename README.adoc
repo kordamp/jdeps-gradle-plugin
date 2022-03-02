@@ -56,6 +56,7 @@ The following properties can be specified in the `jdeps` task configuration
 | listReducedDeps   | list-reduced-deps   | jdeps.list.reduced.deps   | boolean             | false
 | printModuleDeps   | print-module-deps   | jdeps.print.module.deps   | boolean             | false
 | verbose           | verbose             | jdeps.verbose             | boolean             | false
+| modular           | modular             | jdeps.modular             | boolean             | false
 | summary           | summary             | jdeps.summary             | boolean             | false
 | profile           | profile             | jdeps.profile             | boolean             | false
 | recursive         | recursive           | jdeps.recursive           | boolean             | false
