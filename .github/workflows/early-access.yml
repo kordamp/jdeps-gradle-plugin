@@ -1,4 +1,4 @@
-name: 'Early Access'
+name: Early Access
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   earlyaccess:
-    name: 'Early Access'
+    name: Early Access
     if: github.repository == 'kordamp/jdeps-gradle-plugin' && startsWith(github.event.head_commit.message, 'Releasing version') != true
     uses: kordamp/kordamp-gradle-plugin-workflow/.github/workflows/early-access.yml@main
     secrets:
