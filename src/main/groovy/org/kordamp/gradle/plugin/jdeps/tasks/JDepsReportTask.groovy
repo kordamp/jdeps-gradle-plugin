@@ -21,8 +21,8 @@ import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
 import org.gradle.api.JavaVersion
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.file.RegularFile
-import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.file.Directory
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.ListProperty
@@ -30,7 +30,7 @@ import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
@@ -40,13 +40,13 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.options.Option
 import org.kordamp.gradle.property.BooleanState
+import org.kordamp.gradle.property.DirectoryState
 import org.kordamp.gradle.property.ListState
 import org.kordamp.gradle.property.MapState
-import org.kordamp.gradle.property.RegularFileState
 import org.kordamp.gradle.property.SimpleBooleanState
+import org.kordamp.gradle.property.SimpleDirectoryState
 import org.kordamp.gradle.property.SimpleListState
 import org.kordamp.gradle.property.SimpleMapState
-import org.kordamp.gradle.property.SimpleRegularFileState
 import org.kordamp.gradle.property.SimpleStringState
 import org.kordamp.gradle.property.StringState
 import org.zeroturnaround.exec.ProcessExecutor
@@ -86,7 +86,7 @@ class JDepsReportTask extends DefaultTask {
     private final ListState sourceSets
     private final StringState multiRelease
     private final MapState multiReleaseJars
-    private final RegularFileState dotOutput
+    private final DirectoryState dotOutput
 
     private Object reportDir
 
@@ -120,7 +120,7 @@ class JDepsReportTask extends DefaultTask {
         multiRelease = SimpleStringState.of(this, 'jdeps.multi.release', 'base')
 
         multiReleaseJars = SimpleMapState.of(this, 'jdeps.multi.release.jars', [:])
-        dotOutput = SimpleRegularFileState.of(this, 'jdeps.dot.output', (RegularFile) null)
+        dotOutput = SimpleDirectoryState.of(this, 'jdeps.dot.output', (Directory) null)
     }
 
     @Option(option = 'list-deps', description = 'Lists the module dependences')
@@ -349,11 +349,11 @@ class JDepsReportTask extends DefaultTask {
     Provider<Map<String, String>> getResolvedMultiReleaseJars() { multiReleaseJars.provider }
 
     @Internal
-    RegularFileProperty getDotOutput() { dotOutput.property }
+    DirectoryProperty getDotOutput() { dotOutput.property }
 
-    @InputFile
+    @InputDirectory
     @Optional
-    Provider<RegularFile> getResolvedDotOutput() { dotOutput.provider }
+    Provider<Directory> getResolvedDotOutput() { dotOutput.provider }
 
     @TaskAction
     void evaluate() {
@@ -385,7 +385,8 @@ class JDepsReportTask extends DefaultTask {
         if (resolvedApionly.get()) baseCmd << '-apionly'
         if (getResolvedDotOutput().present) {
             baseCmd << '-dotoutput'
-            baseCmd << getResolvedDotOutput().get().asFile.absolutePath
+            baseCmd << resolvedDotOutput.get().asFile.absolutePath
+            resolvedDotOutput.get().asFile.mkdirs()
         }
 
         if (JavaVersion.current().java9Compatible) {
