@@ -388,6 +388,7 @@ class JDepsReportTask extends DefaultTask {
             baseCmd << resolvedDotOutput.get().asFile.absolutePath
             resolvedDotOutput.get().asFile.mkdirs()
         }
+        if (resolvedIgnoreMissingDeps.get()) baseCmd << '--ignore-missing-deps'
 
         if (JavaVersion.current().java9Compatible) {
             if (resolvedMultiRelease.present) {
