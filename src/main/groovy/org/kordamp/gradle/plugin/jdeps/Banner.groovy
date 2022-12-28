@@ -36,6 +36,7 @@ final class Banner {
     private final String productName = bundle.getString('product.name')
     private final String banner = MessageFormat.format(bundle.getString('product.banner'), productName, productVersion)
     private final List<String> visited = []
+    private static final String ORG_KORDAMP_BANNER = 'org.kordamp.banner'
 
     private static final Banner b = new Banner()
 
@@ -54,23 +55,24 @@ final class Banner {
                 b.visited.clear()
             }
         })
+        boolean printBanner = null == System.getProperty(ORG_KORDAMP_BANNER) || Boolean.getBoolean(ORG_KORDAMP_BANNER)
 
         File parent = new File(project.gradle.gradleUserHomeDir, 'caches')
         File markerFile = b.getMarkerFile(parent)
         if (!markerFile.exists()) {
             markerFile.parentFile.mkdirs()
             markerFile.text = '1'
-            println(b.banner)
+            if (printBanner) println(b.banner)
         } else {
             try {
                 int count = Integer.parseInt(markerFile.text)
                 if (count < 3) {
-                    println(b.banner)
+                    if (printBanner) println(b.banner)
                 }
                 markerFile.text = (count + 1) + ''
             } catch (NumberFormatException e) {
                 markerFile.text = '1'
-                println(b.banner)
+                if (printBanner) println(b.banner)
             }
         }
     }
