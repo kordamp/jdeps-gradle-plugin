@@ -20,12 +20,12 @@ project:
   name: jdeps-gradle-plugin
   description: JDeps Gradle Plugin
   longDescription: Run jdeps on Gradle projects
-  website: https://github.com/kordamp/jdeps-gradle-plugin
+  links:
+    homepage: https://github.com/kordamp/jdeps-gradle-plugin
   authors:
     - Andres Almiray
   license: Apache-2.0
-  extraProperties:
-    inceptionYear: 2015
+  inceptionYear: 2015
 
 release:
   github:
@@ -34,17 +34,36 @@ release:
     overwrite: true
     milestone:
       name: '{{projectVersion}}'
+    issues:
+      enabled: true
     changelog:
       formatted: ALWAYS
-      format: '- {{commitShortHash}} {{commitTitle}}'
       preset: conventional-commits
       contributors:
         format: '- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}'
+      labelers:
+        - label: 'dependencies'
+          title: 'regex:^(?:deps(?:\(.*\))?!?):\s.*'
+          order: 120
+      categories:
+        - title: '⚙️  Dependencies'
+          key: 'dependencies'
+          order: 80
+          labels:
+            - 'dependencies'
       hide:
+        categories:
+          - 'merge'
         contributors:
           - 'GitHub'
+      replacers:
+        - search: 'deps: '
 
 announce:
   twitter:
-    active: release
+    active: RELEASE
+    status: 🚀 {{projectName}} {{projectVersion}} has been released! {{releaseNotesUrl}}
+  mastodon:
+    active: RELEASE
+    host: https://mastodon.social
     status: 🚀 {{projectName}} {{projectVersion}} has been released! {{releaseNotesUrl}}
