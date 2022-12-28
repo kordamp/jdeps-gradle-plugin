@@ -24,7 +24,9 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.tasks.compile.JavaCompile
 import org.kordamp.gradle.plugin.jdeps.tasks.JDepsReportTask
 
 /**
@@ -33,7 +35,9 @@ import org.kordamp.gradle.plugin.jdeps.tasks.JDepsReportTask
 @CompileStatic
 class JDepsPlugin implements Plugin<Project> {
     void apply(Project project) {
-        Banner.display(project)
+        project.gradle.sharedServices
+            .registerIfAbsent('jdeps-banner', Banner, { spec -> })
+            .get().display(project)
 
         project.plugins.apply(JavaPlugin)
 
@@ -44,6 +48,11 @@ class JDepsPlugin implements Plugin<Project> {
                     t.dependsOn(project.tasks.named('classes'))
                     t.group = BasePlugin.BUILD_GROUP
                     t.description = 'Generate a jdeps report on project classes and dependencies'
+                    t.compileJava = project.tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME, JavaCompile)
+                    t.javaPluginConvention.set(project.convention.getPlugin(JavaPluginConvention))
+                    t.projectName.set(project.name)
+                    t.reportDir.convention(project.layout.buildDirectory.dir('reports/jdeps'))
+                    t.projectConfigurations = project.configurations
                 }
             })
 

@@ -71,7 +71,7 @@ The following properties can be specified in the `jdeps` task configuration
 | requires          | require             | jdeps.require             | List<String>        | []
 | packages          | package             | jdeps.package             | List<String>        | []
 | consoleOutput     | console-output      | jdeps.console.output      | boolean             | true
-| reportsDir        |                     |                           | File                | "${buildDir}/reports/jdeps"
+| reportsDir        |                     |                           | Directory           | "${buildDir}/reports/jdeps"
 | configurations    | configurations      | jdeps.configurations      | List<String>        | []
 | classpaths        | classpaths          | jdeps.classpaths          | List<String>        | []
 | sourceSets        | sourcesets          | jdeps.sourcesets          | List<String>        | ['main']

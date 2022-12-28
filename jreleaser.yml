@@ -25,7 +25,7 @@ project:
   authors:
     - Andres Almiray
   license: Apache-2.0
-  inceptionYear: 2015
+  inceptionYear: 2017
 
 release:
   github:

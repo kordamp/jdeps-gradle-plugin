@@ -21,9 +21,10 @@ import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
 import org.gradle.api.JavaVersion
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
@@ -51,6 +52,7 @@ import org.kordamp.gradle.property.SimpleStringState
 import org.kordamp.gradle.property.StringState
 import org.zeroturnaround.exec.ProcessExecutor
 
+import javax.inject.Inject
 import java.util.regex.Pattern
 
 /**
@@ -88,10 +90,28 @@ class JDepsReportTask extends DefaultTask {
     private final MapState multiReleaseJars
     private final DirectoryState dotOutput
 
-    private Object reportDir
+    @OutputDirectory
+    final DirectoryProperty reportDir
 
-    JDepsReportTask() {
+    @Internal
+    TaskProvider<JavaCompile> compileJava
+
+    @Internal
+    final Property<JavaPluginConvention> javaPluginConvention
+
+    @Internal
+    final Property<String> projectName
+
+    @Internal
+    ConfigurationContainer projectConfigurations
+
+    @Inject
+    JDepsReportTask(ObjectFactory objects) {
         extensions.create('moduleOptions', ModuleOptions)
+
+        reportDir = objects.directoryProperty()
+        projectName = objects.property(String)
+        javaPluginConvention = objects.property(JavaPluginConvention)
 
         listDeps = SimpleBooleanState.of(this, 'jdeps.list.deps', false)
         listReducedDeps = SimpleBooleanState.of(this, 'jdeps.list.reduced.deps', false)
@@ -193,7 +213,7 @@ class JDepsReportTask extends DefaultTask {
     void setMultiRelease(String value) { multiRelease.property.set(value) }
 
     @Option(option = 'dot-output', description = 'Destination directory for DOT file output')
-    void setDotOutput(String value) { dotOutput.property.set(project.file(value)) }
+    void setDotOutput(String value) { dotOutput.property.set(new File(value)) }
 
     @Internal
     Property<Boolean> getListDeps() { listDeps.property }
@@ -358,7 +378,6 @@ class JDepsReportTask extends DefaultTask {
     @TaskAction
     void evaluate() {
         ModuleOptions moduleOptions = extensions.getByType(ModuleOptions)
-        TaskProvider<JavaCompile> compileJava = project.tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME, JavaCompile)
         String classpath = compileJava.get().classpath.asPath
         List<String> compilerArgs = compileJava.get().options.compilerArgs
         List<String> commandOutput = []
@@ -473,25 +492,24 @@ class JDepsReportTask extends DefaultTask {
             }
         }
 
-        compileJava.get().classpath = project.files()
+        // compileJava.get().classpath = project.files()
 
-        project.logger.info("jdeps version is ${executeCommand(['jdeps', '-version'])}")
+        logger.info("jdeps version is ${executeCommand(['jdeps', '-version'])}")
 
         Map<String, String> outputs = [:]
-        JavaPluginConvention convention = project.convention.getPlugin(JavaPluginConvention)
         resolvedSourceSets.get().each { sc ->
-            SourceSet sourceSet = convention.sourceSets.findByName(sc)
-            project.logger.info("Running jdeps on sourceSet ${sourceSet.name}")
+            SourceSet sourceSet = javaPluginConvention.get().sourceSets.findByName(sc)
+            logger.info("Running jdeps on sourceSet ${sourceSet.name}")
             sourceSet.output.files.each { File file ->
                 if (!file.exists()) {
                     return // skip
                 }
 
                 List<String> cmd = applyExplicitCommand(baseCmd)
-                project.logger.info("jdeps command set to ${cmd.join(' ')}")
+                logger.info("jdeps command set to ${cmd.join(' ')}")
                 String output = JDepsReportTask.executeCommandOn(cmd, file.absolutePath)
                 if (output) {
-                    commandOutput << "\nProject: ${project.name}\n${output}".toString()
+                    commandOutput << "\nProject: ${projectName.get()}\n${output}".toString()
                     outputs[sourceSet.name] = output
                 }
 
@@ -512,18 +530,18 @@ class JDepsReportTask extends DefaultTask {
         }
 
         for (String c : resolvedConfigurations.get()) {
-            inspectConfiguration(project.configurations[c.trim()], baseCmd, commandOutput, outputs)
+            inspectConfiguration(projectConfigurations[c.trim()], baseCmd, commandOutput, outputs)
         }
 
         for (String c : resolvedClasspaths.get()) {
-            inspectConfiguration(project.configurations[c.trim()], baseCmd, commandOutput, outputs)
+            inspectConfiguration(projectConfigurations[c.trim()], baseCmd, commandOutput, outputs)
         }
 
         if (commandOutput) {
             commandOutput = commandOutput.unique()
             if (resolvedConsoleOutput.get()) println commandOutput.join('\n')
 
-            File parentFile = getReportsDir()
+            File parentFile = reportDir.get().asFile
             if (!parentFile.exists()) parentFile.mkdirs()
             File logFile = new File(parentFile, 'jdeps-report.txt')
             logFile.append(commandOutput.join('\n'))
@@ -543,21 +561,8 @@ class JDepsReportTask extends DefaultTask {
         }
     }
 
-    @OutputDirectory
-    File getReportsDir() {
-        if (this.reportDir == null) {
-            File reportsDir = new File(project.buildDir, 'reports')
-            this.reportDir = new File(reportsDir, 'jdeps')
-        }
-        project.file(this.reportDir)
-    }
-
-    void setReportsDir(File f) {
-        this.reportDir = f
-    }
-
     private void inspectConfiguration(Configuration configuration, List<String> baseCmd, List<String> commandOutput, Map<String, String> outputs) {
-        project.logger.info("Running jdeps on configuration ${configuration.name}")
+        logger.info("Running jdeps on configuration ${configuration.name}")
         configuration.resolve().each { File file ->
             if (!file.exists()) {
                 return // skip
@@ -573,7 +578,7 @@ class JDepsReportTask extends DefaultTask {
             }
 
             command = applyExplicitCommand(command)
-            project.logger.info("jdeps command set to: ${command.join(' ')} ${file.absolutePath}")
+            logger.info("jdeps command set to: ${command.join(' ')} ${file.absolutePath}")
             String output = JDepsReportTask.executeCommandOn(command, file.absolutePath)
             if (output) {
                 commandOutput << "\nDependency: ${file.name}\n${output}".toString()
